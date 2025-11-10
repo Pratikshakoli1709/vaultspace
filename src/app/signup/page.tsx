@@ -76,8 +76,12 @@ export default function SignupPage() {
                 title: "Sign-up Failed",
                 description: error.message,
             })
-        } else if (data.session) {
-            // User is signed up and logged in successfully.
+            setIsLoading(false)
+            return
+        }
+        
+        // This will be true if email confirmation is disabled in Supabase project settings
+        if (data.session) {
             toast({
                 title: "Account Created!",
                 description: "Redirecting you to the dashboard...",
@@ -85,14 +89,31 @@ export default function SignupPage() {
             router.push('/dashboard')
             router.refresh()
         } else if (data.user) {
-            // This case handles when email confirmation is required by Supabase project settings.
+             // This case handles when email confirmation is required.
+             // We'll proceed as if login will work, and let the login page handle any issues.
             toast({
-                title: "Confirmation Email Sent",
-                description: "Please check your email to verify your account before logging in.",
+                title: "Account Created!",
+                description: "You can now log in.",
             });
-            router.push('/login');
+            // Attempt to log the user in, which will either succeed or fail gracefully on the login page.
+            const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+            if (signInError) {
+                 toast({
+                    variant: "destructive",
+                    title: "Login Failed After Sign-up",
+                    description: "Please check your email to verify your account before logging in.",
+                });
+                router.push('/login');
+            } else {
+                 toast({
+                    title: "Login Successful",
+                    description: "Redirecting you to the dashboard...",
+                })
+                router.push('/dashboard')
+                router.refresh()
+            }
         }
-        setIsLoading(false)
+        // Don't set loading to false here if a redirect is happening
     }
 
     const handleGoogleSignUp = async () => {
@@ -103,7 +124,6 @@ export default function SignupPage() {
               redirectTo: `${location.origin}/auth/callback`,
             },
         })
-        // No need to set isLoading to false here, as the page will redirect.
     }
 
 
