@@ -67,8 +67,6 @@ export default function SignupPage() {
                 data: {
                     full_name: name,
                 },
-                // This link will be sent to the user's email to confirm their account
-                emailRedirectTo: `${location.origin}/auth/callback`,
             },
         })
 
@@ -78,27 +76,21 @@ export default function SignupPage() {
                 title: "Sign-up Failed",
                 description: error.message,
             })
+        } else if (data.session) {
+            // User is signed up and logged in successfully.
+            toast({
+                title: "Account Created!",
+                description: "Redirecting you to the dashboard...",
+            })
+            router.push('/dashboard')
+            router.refresh()
         } else if (data.user) {
-             // Supabase sends a confirmation email.
-             // If data.user.identities is empty, it means the user signed up with email/password
-             // and needs to confirm their email.
-             if (data.user.identities && data.user.identities.length === 0) {
-                 toast({
-                    title: "Confirmation Email Sent",
-                    description: "Please check your email to verify your account before logging in.",
-                });
-                // We don't redirect here, user must confirm email first.
-                // We can optionally redirect them to the login page.
-                router.push('/login');
-             } else {
-                // This case handles social logins where the user is already confirmed.
-                toast({
-                    title: "Sign-up Successful",
-                    description: "Redirecting you to the dashboard...",
-                })
-                router.push('/dashboard')
-                router.refresh()
-            }
+            // This case handles when email confirmation is required by Supabase project settings.
+            toast({
+                title: "Confirmation Email Sent",
+                description: "Please check your email to verify your account before logging in.",
+            });
+            router.push('/login');
         }
         setIsLoading(false)
     }
