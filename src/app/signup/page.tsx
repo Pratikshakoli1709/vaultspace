@@ -89,29 +89,13 @@ export default function SignupPage() {
             router.push('/dashboard')
             router.refresh()
         } else if (data.user) {
-             // This case handles when email confirmation is required.
-             // We'll proceed as if login will work, and let the login page handle any issues.
+             // This case handles when email confirmation is required by Supabase.
+             // We cannot bypass this, so we inform the user.
             toast({
                 title: "Account Created!",
-                description: "You can now log in.",
+                description: "Please check your email to verify your account before logging in.",
             });
-            // Attempt to log the user in, which will either succeed or fail gracefully on the login page.
-            const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-            if (signInError) {
-                 toast({
-                    variant: "destructive",
-                    title: "Login Failed After Sign-up",
-                    description: "Please check your email to verify your account before logging in.",
-                });
-                router.push('/login');
-            } else {
-                 toast({
-                    title: "Login Successful",
-                    description: "Redirecting you to the dashboard...",
-                })
-                router.push('/dashboard')
-                router.refresh()
-            }
+            router.push('/login');
         }
         // Don't set loading to false here if a redirect is happening
     }
