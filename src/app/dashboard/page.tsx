@@ -11,25 +11,25 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 
 export default async function DashboardPage() {
-  const supabase = createClient();
+  // const supabase = createClient();
 
-  const { data: { user: authUser }, error } = await supabase.auth.getUser();
+  // const { data: { user: authUser }, error } = await supabase.auth.getUser();
 
-  if (error || !authUser) {
-    redirect('/login');
-  }
+  // if (error || !authUser) {
+  //   redirect('/login');
+  // }
 
   // At this point, we have an authenticated user.
   // We can use their info. In a real app, you'd fetch profile from your own 'users' table.
   // For now, we'll construct a user object from the auth data.
   // We will temporarily give the user an 'admin' role to see all features.
   const currentUser: User = {
-    id: authUser.id,
-    name: authUser.user_metadata.full_name || authUser.email || 'User',
-    email: authUser.email || '',
+    id: 'user-1-mock',
+    name: 'Admin Preview',
+    email: 'admin@example.com',
     role: 'admin', // TEMPORARY: Hardcoded for preview
-    createdAt: authUser.created_at,
-    avatarUrl: authUser.user_metadata.avatar_url || `https://i.pravatar.cc/150?u=${authUser.id}`,
+    createdAt: new Date().toISOString(),
+    avatarUrl: `https://i.pravatar.cc/150?u=admin-preview`,
   }
 
   // In a real app, this data would come from Supabase queries.
