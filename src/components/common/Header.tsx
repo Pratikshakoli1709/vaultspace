@@ -41,7 +41,7 @@ export function Header({ user, notifications }: { user: User, notifications: Enr
 
         {user.role === 'admin' && <BroadcastDialog />}
         
-        <UploadAssetDialog>
+        <UploadAssetDialog user={user}>
           <Button>
               <PlusCircle className="mr-2 h-5 w-5" />
               Add Asset

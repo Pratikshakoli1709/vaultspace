@@ -1,14 +1,14 @@
 import { User, DataItem, ActivityLog, Notification, DataItemType, UserRole } from './types';
-import { PlaceHolderImages } from './placeholder-images';
 
-const getImage = (id: string) => PlaceHolderImages.find(img => img.id === id)?.imageUrl ?? '';
+// NOTE: This mock data is for UI prototyping.
+// It does not interact with the Supabase database.
 
 const users: User[] = [
   {
     id: 'user-1',
     name: 'Alex Johnson',
     email: 'alex.j@example.com',
-    avatarUrl: getImage('avatar-alex'),
+    avatarUrl: 'https://i.pravatar.cc/150?u=user-1',
     role: 'admin' as UserRole,
     createdAt: '2024-07-20T10:00:00Z',
   },
@@ -16,7 +16,7 @@ const users: User[] = [
     id: 'user-2',
     name: 'Maria Garcia',
     email: 'maria.g@example.com',
-    avatarUrl: getImage('avatar-maria'),
+    avatarUrl: 'https://i.pravatar.cc/150?u=user-2',
     role: 'user' as UserRole,
     createdAt: '2024-07-21T11:30:00Z',
   },
@@ -24,26 +24,10 @@ const users: User[] = [
     id: 'user-3',
     name: 'Chen Wei',
     email: 'chen.w@example.com',
-    avatarUrl: getImage('avatar-chen'),
+    avatarUrl: 'https://i.pravatar.cc/150?u=user-3',
     role: 'user' as UserRole,
     createdAt: '2024-07-22T09:00:00Z',
   },
-  {
-    id: 'user-4',
-    name: 'Sarah Miller',
-    email: 's.miller@example.com',
-    avatarUrl: getImage('avatar-sarah'),
-    role: 'user' as UserRole,
-    createdAt: '2024-07-23T14:15:00Z',
-  },
-  {
-    id: 'user-5',
-    name: 'David Brown',
-    email: 'd.brown@example.com',
-    avatarUrl: getImage('avatar-david'),
-    role: 'user' as UserRole,
-    createdAt: '2024-07-24T16:45:00Z',
-  }
 ];
 
 const dataItems: DataItem[] = [
@@ -79,68 +63,16 @@ const dataItems: DataItem[] = [
     id: 'item-4',
     title: 'New Logo & Brand Guidelines',
     type: 'image' as DataItemType,
-    file_url: getImage('asset-logo-mockups'),
+    file_url: 'https://picsum.photos/seed/brand-guidelines/800/600',
     created_by: 'user-2',
     created_at: '2024-07-29T16:45:00Z',
     updated_at: '2024-07-29T16:45:00Z',
-  },
-   {
-    id: 'item-5',
-    title: 'Q3 Financial Summary',
-    type: 'document' as DataItemType,
-    file_url: '/placeholder.pdf',
-    created_by: 'user-1',
-    created_at: '2024-07-30T11:00:00Z',
-    updated_at: '2024-07-30T11:05:00Z',
-  },
-  {
-    id: 'item-6',
-    title: 'Customer Feedback Portal',
-    type: 'link' as DataItemType,
-    link_url: 'https://feedback.vaultspace.com',
-    created_by: 'user-4',
-    created_at: '2024-07-29T08:00:00Z',
-    updated_at: '2024-07-29T08:00:00Z',
-  },
-  {
-    id: 'item-7',
-    title: 'Stripe API Key (Test)',
-    type: 'key' as DataItemType,
-    text_content: 'pk_test_aBcDeFgHiJkLmNoPqRsTuVwXyZ123456',
-    created_by: 'user-1',
-    created_at: '2024-07-28T18:00:00Z',
-    updated_at: '2024-07-28T18:00:00Z',
-  },
-  {
-    id: 'item-8',
-    title: 'Social Media Campaign Images',
-    type: 'image' as DataItemType,
-    file_url: getImage('asset-social-campaign'),
-    created_by: 'user-5',
-    created_at: '2024-07-30T14:00:00Z',
-    updated_at: '2024-07-30T14:00:00Z',
   },
 ];
 
 const activityLogs: ActivityLog[] = [
   {
     id: 'log-1',
-    user_id: 'user-5',
-    action: 'UPLOADED',
-    item_id: 'item-8',
-    item_title: 'Social Media Campaign Images',
-    timestamp: '2024-07-30T14:00:00Z',
-  },
-  {
-    id: 'log-2',
-    user_id: 'user-1',
-    action: 'UPLOADED',
-    item_id: 'item-5',
-    item_title: 'Q3 Financial Summary',
-    timestamp: '2024-07-30T11:00:00Z',
-  },
-  {
-    id: 'log-3',
     user_id: 'user-2',
     action: 'UPLOADED',
     item_id: 'item-4',
@@ -148,36 +80,12 @@ const activityLogs: ActivityLog[] = [
     timestamp: '2024-07-29T16:45:00Z',
   },
   {
-    id: 'log-4',
-    user_id: 'user-4',
-    action: 'VIEWED',
-    item_id: 'item-3',
-    item_title: 'OpenAI API Key (Production)',
-    timestamp: '2024-07-29T11:05:00Z',
-  },
-  {
-    id: 'log-5',
+    id: 'log-2',
     user_id: 'user-1',
     action: 'EDITED',
     item_id: 'item-3',
-    item_title: 'OpenAI API Key (Legacy)',
-    timestamp: '2024-07-29T11:00:00Z',
-  },
-  {
-    id: 'log-6',
-    user_id: 'user-3',
-    action: 'COPIED',
-    item_id: 'item-3',
     item_title: 'OpenAI API Key (Production)',
-    timestamp: '2024-07-29T10:55:00Z',
-  },
-  {
-    id: 'log-7',
-    user_id: 'user-3',
-    action: 'UPLOADED',
-    item_id: 'item-2',
-    item_title: 'Staging Server Deployment URL',
-    timestamp: '2024-07-27T14:30:00Z',
+    timestamp: '2024-07-29T11:00:00Z',
   },
 ];
 
@@ -190,23 +98,10 @@ const notifications: Notification[] = [
     is_read: false,
     timestamp: '2024-07-29T18:00:00Z',
   },
-  {
-    id: 'notif-2',
-    sender_id: 'user-1',
-    message: 'The new asset preview modal is now live. Click on any image or document to see it in action.',
-    type: 'broadcast',
-    is_read: true,
-    timestamp: '2024-07-30T09:00:00Z',
-  }
 ];
 
-
-// In a real app, this would involve authentication and a database call.
-// For this prototype, we'll just return the admin user.
-export const getCurrentUser = (): User => users.find(u => u.role === 'admin')!;
-// export const getCurrentUser = (): User => users.find(u => u.role === 'user')!;
-
-
+// This function now only returns the list of all mock users for display purposes.
+// The currently logged-in user is determined by Supabase auth.
 export const getUsers = (): User[] => users;
 
 export type EnrichedDataItem = DataItem & { uploader?: User };

@@ -23,10 +23,10 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import type { DataItemType, User, DataItem, ActivityLog } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
-import { getCurrentUser } from "@/lib/data"
 
 
-export function UploadAssetDialog({ children }: { children: React.ReactNode }) {
+
+export function UploadAssetDialog({ children, user }: { children: React.ReactNode, user: User }) {
   const [assetType, setAssetType] = useState<DataItemType>("link")
   const [open, setOpen] = useState(false)
   const { toast } = useToast()
@@ -35,11 +35,11 @@ export function UploadAssetDialog({ children }: { children: React.ReactNode }) {
   const contentRef = useRef<HTMLInputElement & HTMLTextAreaElement>(null)
 
   const handleUpload = () => {
-    const currentUser = getCurrentUser(); // In real app, get from session
+    const currentUser = user;
     const title = titleRef.current?.value;
     const contentValue = contentRef.current?.value;
 
-    if (!title || !contentValue) {
+    if (!title || (!contentValue && (assetType === 'link' || assetType === 'key'))) {
         toast({
             variant: "destructive",
             title: "Missing fields",
@@ -103,7 +103,7 @@ export function UploadAssetDialog({ children }: { children: React.ReactNode }) {
         return (
           <div className="grid w-full max-w-sm items-center gap-1.5">
             <Label htmlFor="file">File</Label>
-            <Input id="file" type="file" ref={contentRef} />
+            <Input id="file" type="file" ref={contentRef as any} />
             <p className="text-xs text-muted-foreground">This is for demonstration purposes. File content is not actually uploaded.</p>
           </div>
         )
@@ -111,7 +111,7 @@ export function UploadAssetDialog({ children }: { children: React.ReactNode }) {
         return (
           <div>
             <Label htmlFor="link-url">URL</Label>
-            <Input id="link-url" placeholder="https://example.com" ref={contentRef} />
+            <Input id="link-url" placeholder="https://example.com" ref={titleRef} />
           </div>
         )
       case "key":

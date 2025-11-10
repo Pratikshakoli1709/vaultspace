@@ -9,7 +9,7 @@ import { AppSidebar } from '@/components/common/AppSidebar';
 import { Header } from '@/components/common/Header';
 import { Dashboard } from '@/components/dashboard/Dashboard';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-import { getCurrentUser, getUsers, getDataItemsWithUploader, getActivityLogsWithUser, getNotifications, EnrichedDataItem, EnrichedActivityLog, EnrichedNotification } from '@/lib/data';
+import { getUsers, getDataItemsWithUploader, getActivityLogsWithUser, getNotifications, type EnrichedDataItem, type EnrichedActivityLog, type EnrichedNotification } from '@/lib/data';
 import type { User } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -17,7 +17,6 @@ export default function DashboardPage() {
   const router = useRouter();
   const supabase = createClient();
   const [user, setUser] = useState<User | null>(null);
-  const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,11 +26,21 @@ export default function DashboardPage() {
         router.push('/login');
         return;
       }
+      
+      // Create an application user object from the Supabase user
+      const appUser: User = {
+        id: data.user.id,
+        // Supabase stores the full name in user_metadata
+        name: data.user.user_metadata.full_name || 'User',
+        email: data.user.email || '',
+        // For now, we'll hardcode a role. In a real app, you'd fetch this from your `users` table.
+        role: 'admin', 
+        createdAt: data.user.created_at,
+        // Placeholder avatar, you can replace this logic
+        avatarUrl: `https://i.pravatar.cc/150?u=${data.user.id}`
+      };
 
-      // We still use our mock data for roles and details
-      const appUser = getCurrentUser(); 
       setUser(appUser);
-      setSupabaseUser(data.user);
       setLoading(false);
     };
 
@@ -54,7 +63,8 @@ export default function DashboardPage() {
   }
 
   // In a real app, this data would come from Supabase queries.
-  const users = getUsers();
+  // For now, we continue to use mock data for these lists.
+  const allUsers = getUsers();
   const assets: EnrichedDataItem[] = getDataItemsWithUploader();
   const activityLogs: EnrichedActivityLog[] = getActivityLogsWithUser();
   const notifications: EnrichedNotification[] = getNotifications();
@@ -68,7 +78,7 @@ export default function DashboardPage() {
           <main className="flex-1 p-4 sm:p-6 lg:p-8">
             <Dashboard
               currentUser={user}
-              users={users}
+              users={allUsers}
               assets={assets}
               activityLogs={activityLogs}
             />
