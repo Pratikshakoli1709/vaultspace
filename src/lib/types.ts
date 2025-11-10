@@ -28,3 +28,12 @@ export type ActivityLog = {
   assetName?: string;
   timestamp: string;
 };
+
+export type Notification = {
+  id: string;
+  title: string;
+  message: string;
+  type: 'broadcast' | 'personal';
+  sender: string; // Could be 'System' or a user's name
+  timestamp: string;
+}

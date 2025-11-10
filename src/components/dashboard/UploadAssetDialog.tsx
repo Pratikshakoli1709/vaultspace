@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -21,10 +21,64 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import type { AssetType } from "@/lib/types"
+import type { AssetType, User, Asset, ActivityLog } from "@/lib/types"
+import { useToast } from "@/hooks/use-toast"
+import { getCurrentUser } from "@/lib/data"
+
 
 export function UploadAssetDialog({ children }: { children: React.ReactNode }) {
   const [assetType, setAssetType] = useState<AssetType>("link")
+  const [open, setOpen] = useState(false)
+  const { toast } = useToast()
+  
+  const nameRef = useRef<HTMLInputElement>(null)
+  const contentRef = useRef<HTMLInputElement & HTMLTextAreaElement>(null)
+
+  const handleUpload = () => {
+    const currentUser = getCurrentUser(); // In real app, get from session
+    const name = nameRef.current?.value;
+    const content = contentRef.current?.value;
+
+    if (!name || !content) {
+        toast({
+            variant: "destructive",
+            title: "Missing fields",
+            description: "Please fill out all fields to upload an asset.",
+        });
+        return;
+    }
+
+    const newAsset: Asset & { uploader: User } = {
+        id: `asset-${Date.now()}`,
+        name,
+        type: assetType,
+        content: assetType === 'image' ? 'https://picsum.photos/seed/placeholder/400/300' : content,
+        uploaderId: currentUser.id,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        uploader: currentUser,
+    };
+
+    const newLog: ActivityLog & { user: User } = {
+        id: `log-${Date.now()}`,
+        userId: currentUser.id,
+        action: 'UPLOADED',
+        assetId: newAsset.id,
+        assetName: newAsset.name,
+        timestamp: new Date().toISOString(),
+        user: currentUser,
+    };
+
+    // This is a mock implementation. In a real app, you would make an API call here.
+    // We're using a custom event to simulate a real-time update.
+    document.dispatchEvent(new CustomEvent('assetUploaded', { detail: { asset: newAsset, log: newLog } }));
+
+    toast({
+        title: "Asset Uploaded",
+        description: `"${name}" has been added to the vault.`,
+    });
+    setOpen(false); // Close the dialog
+  }
 
   const renderContentField = () => {
     switch (assetType) {
@@ -33,14 +87,14 @@ export function UploadAssetDialog({ children }: { children: React.ReactNode }) {
         return (
           <div className="grid w-full max-w-sm items-center gap-1.5">
             <Label htmlFor="file">File</Label>
-            <Input id="file" type="file" />
+            <Input id="file" type="file" ref={contentRef} />
           </div>
         )
       case "link":
         return (
           <div>
             <Label htmlFor="link-url">URL</Label>
-            <Input id="link-url" placeholder="https://example.com" />
+            <Input id="link-url" placeholder="https://example.com" ref={contentRef} />
           </div>
         )
       case "key":
@@ -51,6 +105,7 @@ export function UploadAssetDialog({ children }: { children: React.ReactNode }) {
               id="key-value"
               placeholder="Enter your secret key here"
               className="font-mono"
+              ref={contentRef}
             />
           </div>
         )
@@ -60,7 +115,7 @@ export function UploadAssetDialog({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
@@ -94,6 +149,7 @@ export function UploadAssetDialog({ children }: { children: React.ReactNode }) {
             </Label>
             <Input
               id="name"
+              ref={nameRef}
               placeholder="e.g. Production API Key"
               className="col-span-3"
             />
@@ -106,7 +162,7 @@ export function UploadAssetDialog({ children }: { children: React.ReactNode }) {
            </div>
         </div>
         <DialogFooter>
-          <Button type="submit">Upload Asset</Button>
+          <Button onClick={handleUpload}>Upload Asset</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

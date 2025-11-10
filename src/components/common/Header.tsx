@@ -12,11 +12,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import type { User } from '@/lib/types';
-import { Bell, LogOut, PlusCircle, Search, Settings, User as UserIcon } from 'lucide-react';
+import type { User, Notification } from '@/lib/types';
+import { LogOut, PlusCircle, Search, Settings, User as UserIcon } from 'lucide-react';
 import { UploadAssetDialog } from '../dashboard/UploadAssetDialog';
+import { ThemeToggle } from './ThemeToggle';
+import { NotificationsPopover } from './NotificationsPopover';
+import { BroadcastDialog } from '../dashboard/BroadcastDialog';
 
-export function Header({ user }: { user: User }) {
+export function Header({ user, notifications }: { user: User, notifications: Notification[] }) {
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-card px-4 md:px-6">
       <div className="flex items-center gap-2">
@@ -32,16 +35,18 @@ export function Header({ user }: { user: User }) {
             className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[320px]"
           />
         </div>
-        <Button variant="ghost" size="icon" className="rounded-full">
-            <Bell className="h-5 w-5"/>
-            <span className="sr-only">Notifications</span>
-        </Button>
+        <ThemeToggle />
+        <NotificationsPopover notifications={notifications} />
+
+        {user.role === 'admin' && <BroadcastDialog />}
+        
         <UploadAssetDialog>
           <Button>
               <PlusCircle className="mr-2 h-5 w-5" />
               Add Asset
           </Button>
         </UploadAssetDialog>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full">
