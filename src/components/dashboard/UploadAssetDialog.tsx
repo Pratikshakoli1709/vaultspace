@@ -32,24 +32,51 @@ export function UploadAssetDialog({ children, user }: { children: React.ReactNod
   const { toast } = useToast()
   
   const titleRef = useRef<HTMLInputElement>(null)
-  const contentRef = useRef<HTMLInputElement & HTMLTextAreaElement>(null)
+  const linkUrlRef = useRef<HTMLInputElement>(null)
+  const textContentRef = useRef<HTMLTextAreaElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+
 
   const handleUpload = () => {
     const currentUser = user;
     const title = titleRef.current?.value;
-    const contentValue = contentRef.current?.value;
 
-    if (!title || (!contentValue && (assetType === 'link' || assetType === 'key'))) {
+    if (!title) {
         toast({
             variant: "destructive",
             title: "Missing fields",
-            description: "Please fill out all fields to upload an asset.",
+            description: "Please provide a name for the asset.",
+        });
+        return;
+    }
+
+    let isContentMissing = false;
+    switch(assetType) {
+        case 'link':
+            if (!linkUrlRef.current?.value) isContentMissing = true;
+            break;
+        case 'key':
+            if (!textContentRef.current?.value) isContentMissing = true;
+            break;
+        case 'image':
+        case 'document':
+            if (!fileRef.current?.files || fileRef.current.files.length === 0) {
+              isContentMissing = true;
+            }
+            break;
+    }
+
+    if (isContentMissing) {
+        toast({
+            variant: "destructive",
+            title: "Missing fields",
+            description: "Please fill out all content fields to upload an asset.",
         });
         return;
     }
 
     const now = new Date().toISOString();
-    const newAsset: DataItem & { uploader: User } = {
+    const newAsset: EnrichedDataItem = {
         id: `item-${Date.now()}`,
         title,
         type: assetType,
@@ -61,21 +88,24 @@ export function UploadAssetDialog({ children, user }: { children: React.ReactNod
     
     switch(assetType) {
         case 'link':
-            newAsset.link_url = contentValue;
+            newAsset.link_url = linkUrlRef.current?.value;
             break;
         case 'key':
-            newAsset.text_content = contentValue;
+            newAsset.text_content = textContentRef.current?.value;
             break;
         case 'image':
-            newAsset.file_url = 'https://picsum.photos/seed/placeholder/400/300';
+            // In a real app, you would upload fileRef.current.files[0] to cloud storage
+            // and get a URL back. For now, we use a placeholder.
+            newAsset.file_url = `https://picsum.photos/seed/${newAsset.id}/400/300`;
             break;
         case 'document':
+            // Similar to image, we use a placeholder until storage is implemented.
              newAsset.file_url = '/placeholder.pdf';
              break;
     }
 
 
-    const newLog: ActivityLog & { user: User } = {
+    const newLog: EnrichedActivityLog = {
         id: `log-${Date.now()}`,
         user_id: currentUser.id,
         action: 'UPLOADED',
@@ -96,6 +126,11 @@ export function UploadAssetDialog({ children, user }: { children: React.ReactNod
     setOpen(false); // Close the dialog
   }
 
+  // A type guard for the enriched data item
+  type EnrichedDataItem = DataItem & { uploader?: User };
+  type EnrichedActivityLog = ActivityLog & { user?: User };
+
+
   const renderContentField = () => {
     switch (assetType) {
       case "document":
@@ -103,15 +138,15 @@ export function UploadAssetDialog({ children, user }: { children: React.ReactNod
         return (
           <div className="grid w-full max-w-sm items-center gap-1.5">
             <Label htmlFor="file">File</Label>
-            <Input id="file" type="file" ref={contentRef as any} />
-            <p className="text-xs text-muted-foreground">This is for demonstration purposes. File content is not actually uploaded.</p>
+            <Input id="file" type="file" ref={fileRef} />
+            <p className="text-xs text-muted-foreground">This is for demonstration purposes. File content is not actually stored.</p>
           </div>
         )
       case "link":
         return (
           <div>
             <Label htmlFor="link-url">URL</Label>
-            <Input id="link-url" placeholder="https://example.com" ref={titleRef} />
+            <Input id="link-url" placeholder="https://example.com" ref={linkUrlRef} />
           </div>
         )
       case "key":
@@ -122,7 +157,7 @@ export function UploadAssetDialog({ children, user }: { children: React.ReactNod
               id="key-value"
               placeholder="Enter your secret key here"
               className="font-mono"
-              ref={contentRef}
+              ref={textContentRef}
             />
           </div>
         )
