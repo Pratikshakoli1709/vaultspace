@@ -1,3 +1,7 @@
+"use client"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -8,8 +12,10 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { HardDrive } from "lucide-react"
+import { HardDrive, Loader2 } from "lucide-react"
 import Link from "next/link"
+import { createClient } from "@/lib/supabase/client"
+import { useToast } from "@/hooks/use-toast"
 
 function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
@@ -41,6 +47,45 @@ function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
   }
 
 export default function LoginPage() {
+    const router = useRouter()
+    const { toast } = useToast()
+    const [isLoading, setIsLoading] = useState(false)
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const supabase = createClient()
+
+    const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault()
+        setIsLoading(true)
+        
+        const { error } = await supabase.auth.signInWithPassword({ email, password })
+
+        if (error) {
+            toast({
+                variant: "destructive",
+                title: "Login Failed",
+                description: error.message,
+            })
+        } else {
+            toast({
+                title: "Login Successful",
+                description: "Redirecting you to the dashboard...",
+            })
+            router.push('/dashboard')
+            router.refresh() // Ensures the layout re-renders with user data
+        }
+        setIsLoading(false)
+    }
+
+    const handleGoogleLogin = async () => {
+        await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+              redirectTo: `${location.origin}/auth/callback`,
+            },
+        })
+    }
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
       <Card className="mx-auto max-w-sm w-full">
@@ -55,10 +100,10 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="m@example.com" required />
+              <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
             <div className="space-y-2">
               <div className="flex items-center">
@@ -67,12 +112,14 @@ export default function LoginPage() {
                   Forgot your password?
                 </Link>
               </div>
-              <Input id="password" type="password" required />
+              <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading && <Loader2 className="animate-spin mr-2" />}
               Login
             </Button>
-            <div className="relative">
+            </form>
+            <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
               </div>
@@ -82,11 +129,10 @@ export default function LoginPage() {
                 </span>
               </div>
             </div>
-             <Button variant="outline" className="w-full">
+             <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={isLoading}>
                 <GoogleIcon className="mr-2 h-5 w-5"/>
                 Login with Google
             </Button>
-          </div>
           <div className="mt-4 text-center text-sm">
             Don&apos;t have an account?{" "}
             <Link href="/signup" className="underline">

@@ -1,3 +1,7 @@
+"use client"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -8,8 +12,10 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { HardDrive } from "lucide-react"
+import { HardDrive, Loader2 } from "lucide-react"
 import Link from "next/link"
+import { createClient } from "@/lib/supabase/client"
+import { useToast } from "@/hooks/use-toast"
 
 function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
@@ -41,6 +47,64 @@ function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
   }
 
 export default function SignupPage() {
+    const router = useRouter()
+    const { toast } = useToast()
+    const [isLoading, setIsLoading] = useState(false)
+    const [name, setName] = useState("")
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const supabase = createClient()
+
+    const handleSignUp = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault()
+        setIsLoading(true)
+
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: {
+                    full_name: name,
+                    // You can add a default avatar URL here if you want
+                    // avatar_url: 'https://...
+                },
+            },
+        })
+
+        if (error) {
+            toast({
+                variant: "destructive",
+                title: "Sign-up Failed",
+                description: error.message,
+            })
+        } else if (data.user) {
+             if (data.user.identities && data.user.identities.length === 0) {
+                 toast({
+                    title: "Confirmation Email Sent",
+                    description: "Please check your email to confirm your account.",
+                });
+             } else {
+                toast({
+                    title: "Sign-up Successful",
+                    description: "Redirecting you to the dashboard...",
+                })
+                router.push('/dashboard')
+                router.refresh()
+            }
+        }
+        setIsLoading(false)
+    }
+
+    const handleGoogleSignUp = async () => {
+        await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+              redirectTo: `${location.origin}/auth/callback`,
+            },
+        })
+    }
+
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
       <Card className="mx-auto max-w-sm w-full">
@@ -55,23 +119,25 @@ export default function SignupPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <form onSubmit={handleSignUp} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
-              <Input id="name" placeholder="John Doe" required />
+              <Input id="name" placeholder="John Doe" required value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="m@example.com" required />
+              <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" required />
+              <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading && <Loader2 className="animate-spin mr-2" />}
               Create Account
             </Button>
-            <div className="relative">
+            </form>
+            <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
               </div>
@@ -81,11 +147,10 @@ export default function SignupPage() {
                 </span>
               </div>
             </div>
-             <Button variant="outline" className="w-full">
+             <Button variant="outline" className="w-full" onClick={handleGoogleSignUp} disabled={isLoading}>
                 <GoogleIcon className="mr-2 h-5 w-5"/>
                 Sign up with Google
             </Button>
-          </div>
           <div className="mt-4 text-center text-sm">
             Already have an account?{" "}
             <Link href="/login" className="underline">
