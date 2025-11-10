@@ -66,6 +66,7 @@ export default function SignupPage() {
             options: {
                 data: {
                     full_name: name,
+                    avatar_url: `https://i.pravatar.cc/150?u=${email}`
                 },
             },
         })
