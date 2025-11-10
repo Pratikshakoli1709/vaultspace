@@ -1,0 +1,218 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user in the VaultSpace application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The user's full name."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "role": {
+          "type": "string",
+          "description": "The user's role within the application (e.g., 'admin', 'user')."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "email",
+        "role",
+        "createdAt"
+      ]
+    },
+    "Asset": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Asset",
+      "type": "object",
+      "description": "Represents a digital asset stored in VaultSpace.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Asset entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Asset). The ID of the user who uploaded the asset."
+        },
+        "assetType": {
+          "type": "string",
+          "description": "The type of asset (e.g., 'document', 'image', 'link', 'key')."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the asset."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the asset."
+        },
+        "url": {
+          "type": "string",
+          "description": "The URL or path to the asset (if applicable).",
+          "format": "uri"
+        },
+        "content": {
+          "type": "string",
+          "description": "The content of the asset (if applicable, e.g., for environment keys)."
+        },
+        "uploadDate": {
+          "type": "string",
+          "description": "Timestamp indicating when the asset was uploaded.",
+          "format": "date-time"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "description": "Timestamp indicating when the asset was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "assetType",
+        "name",
+        "uploadDate",
+        "lastUpdated"
+      ]
+    },
+    "ActivityLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ActivityLog",
+      "type": "object",
+      "description": "Represents an activity log entry for actions performed within VaultSpace.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ActivityLog entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N ActivityLog). The ID of the user who performed the action."
+        },
+        "assetId": {
+          "type": "string",
+          "description": "Reference to Asset. (Relationship: Asset 1:N ActivityLog). The ID of the asset involved in the action (if applicable)."
+        },
+        "actionType": {
+          "type": "string",
+          "description": "The type of action performed (e.g., 'viewed', 'copied', 'edited', 'uploaded')."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp indicating when the action occurred.",
+          "format": "date-time"
+        },
+        "details": {
+          "type": "string",
+          "description": "Additional details about the action performed."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "actionType",
+        "timestamp"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile data.  Allows authenticated users to read/write their own document. Admins can read/write all user documents.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user (Firebase Auth UID)."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/assets/{assetId}",
+        "definition": {
+          "entityName": "Asset",
+          "schema": {
+            "$ref": "#/backend/entities/Asset"
+          },
+          "description": "Stores assets uploaded by users. Includes denormalized 'userId' field for authorization independence. Supports QAPs via path-based ownership.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns the asset."
+            },
+            {
+              "name": "assetId",
+              "description": "The unique identifier of the asset."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/activityLogs/{activityLogId}",
+        "definition": {
+          "entityName": "ActivityLog",
+          "schema": {
+            "$ref": "#/backend/entities/ActivityLog"
+          },
+          "description": "Stores activity logs for user actions. Includes denormalized 'userId' field for authorization independence.  Supports QAPs via path-based ownership.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who performed the action."
+            },
+            {
+              "name": "activityLogId",
+              "description": "The unique identifier of the activity log entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Collection to store admin user IDs. Existence of a document grants admin privileges.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the admin user (Firebase Auth UID)."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to provide a secure and scalable solution for VaultSpace, adhering to the principles of Authorization Independence, Structural Segregation, and Access Modeling. It focuses on simplicity, security, and debuggability.  The structure consists of 'users' collection, and path-based ownership is implemented to manage user data and assets.  Authorization Independence: Achieved through path-based ownership for user-specific data (assets, logs) eliminating the need for `get()` calls in security rules.  Structural Segregation: Implemented by separating user data and assets into distinct collections with uniform security requirements within each collection.  QAPs:  The structure uses path-based ownership (`/users/{userId}/assets/{assetId}`) which enables secure `list` operations, ensuring that users can only access assets they own. Admin access is granted at the `users` collection level via the `roles_admin` collection, allowing them to manage all user data. The membership model is not needed as a result of the path based design, improving security rule simplicity."
+  }
+}
