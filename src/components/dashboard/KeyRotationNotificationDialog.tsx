@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useActionState } from "react"
+import { useEffect } from "react"
+import { useActionState } from "react"
 import { useFormStatus } from "react-dom"
 import { Button } from "@/components/ui/button"
 import {
@@ -62,9 +63,9 @@ export function KeyRotationNotificationDialog({ children }: { children: React.Re
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Key Rotation Notification</DialogTitle>
+          <DialogTitle>Generate Key Rotation Notification</DialogTitle>
           <DialogDescription>
-            Use AI to generate a notification for users about required API key rotations.
+            Use AI to generate a notification draft for API key rotations. You can copy the message and send it to your users.
           </DialogDescription>
         </DialogHeader>
         <form action={formAction} className="space-y-4">

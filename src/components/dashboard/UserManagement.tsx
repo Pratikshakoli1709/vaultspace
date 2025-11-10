@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import type { User } from "@/lib/types";
 import { KeyRotationNotificationDialog } from "./KeyRotationNotificationDialog";
 import { Button } from "../ui/button";
-import { Send } from "lucide-react";
+import { Bot } from "lucide-react";
 
 interface UserManagementProps {
   users: User[];
@@ -73,14 +73,14 @@ export function UserManagement({ users }: UserManagementProps) {
       </CardContent>
       <CardFooter className="border-t px-6 py-4">
         <div className="flex flex-col gap-2">
-          <h3 className="font-semibold">Admin Tools</h3>
+          <h3 className="font-semibold">Admin AI Tools</h3>
           <p className="text-sm text-muted-foreground">
-            Use specialized tools to manage the workspace and notify users.
+            Use specialized tools to generate notifications for users.
           </p>
           <KeyRotationNotificationDialog>
             <Button variant="outline">
-              <Send className="mr-2 h-4 w-4" />
-              Send Key Rotation Notification
+              <Bot className="mr-2 h-4 w-4" />
+              Generate Key Rotation Notification
             </Button>
           </KeyRotationNotificationDialog>
         </div>
