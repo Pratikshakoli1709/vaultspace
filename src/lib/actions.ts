@@ -12,6 +12,7 @@ const AssetSchema = z.object({
   text_content: z.string().optional(),
   file_url: z.string().optional(),
   created_by: z.string(),
+  updated_by: z.string().optional().nullable(),
 });
 
 type FormState = {
