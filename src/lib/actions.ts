@@ -1,4 +1,3 @@
-
 'use server'
 
 import { createClient } from '@/lib/supabase/server';
@@ -21,24 +20,50 @@ type FormState = {
 }
 
 export async function uploadAsset(formData: FormData): Promise<FormState> {
+  const supabase = createClient();
+  const type = formData.get('type') as 'document' | 'link' | 'key' | 'image';
+  const created_by = formData.get('created_by') as string;
+  const title = formData.get('title') as string;
+  let fileUrl: string | null = null;
+
+  // Handle file upload if asset is an image or document
+  if (type === 'image' || type === 'document') {
+    const file = formData.get('file') as File;
+    if (!file || file.size === 0) {
+      return { success: false, error: 'A file is required for this asset type.' };
+    }
+
+    const filePath = `${created_by}/${Date.now()}-${file.name}`;
+    const { error: uploadError } = await supabase.storage
+      .from('assets')
+      .upload(filePath, file);
+    
+    if (uploadError) {
+      console.error('Supabase Upload Error:', uploadError);
+      return { success: false, error: 'Database error: Could not upload file.' };
+    }
+
+    const { data: urlData } = supabase.storage.from('assets').getPublicUrl(filePath);
+    fileUrl = urlData.publicUrl;
+  }
+  
   const validatedFields = AssetSchema.safeParse({
-    title: formData.get('title'),
-    type: formData.get('type'),
+    title: title,
+    type: type,
     link_url: formData.get('link_url'),
     text_content: formData.get('text_content'),
-    file_url: formData.get('file_url'),
-    created_by: formData.get('created_by'),
-    updated_by: formData.get('updated_by'),
+    file_url: fileUrl,
+    created_by: created_by,
   });
   
   if (!validatedFields.success) {
+    console.error("Validation Error:", validatedFields.error.flatten());
     return {
       success: false,
-      error: validatedFields.error.flatten().fieldErrors.title?.[0] || 'Invalid data.',
+      error: 'Invalid data.',
     };
   }
 
-  const supabase = createClient();
   const { data, error } = await supabase
     .from('data_items')
     .insert([validatedFields.data])
@@ -46,8 +71,8 @@ export async function uploadAsset(formData: FormData): Promise<FormState> {
     .single();
 
   if (error) {
-    console.error('Supabase Error:', error);
-    return { success: false, error: 'Database error: Could not upload asset.' };
+    console.error('Supabase Insert Error:', error);
+    return { success: false, error: 'Database error: Could not save asset metadata.' };
   }
 
   // Log activity

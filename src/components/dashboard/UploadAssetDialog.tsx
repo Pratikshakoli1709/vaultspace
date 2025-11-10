@@ -47,15 +47,6 @@ export function UploadAssetDialog({ children, user }: { children: React.ReactNod
     formData.append('type', assetType);
     formData.append('created_by', user.id);
 
-    // In a real app with file storage, you'd handle the file upload here
-    // and get back a URL to save in the database.
-    // For now, we'll continue using placeholders for file-based assets.
-    if (assetType === 'image') {
-        formData.append('file_url', `https://picsum.photos/seed/${Date.now()}/400/300`);
-    } else if (assetType === 'document') {
-        formData.append('file_url', '/placeholder.pdf');
-    }
-
     const result = await uploadAsset(formData);
 
     if (result.success) {
@@ -81,7 +72,6 @@ export function UploadAssetDialog({ children, user }: { children: React.ReactNod
           <div className="grid w-full max-w-sm items-center gap-1.5">
             <Label htmlFor="file">File</Label>
             <Input id="file" name="file" type="file" required />
-            <p className="text-xs text-muted-foreground">File content is not stored. This is a demo.</p>
           </div>
         )
       case "link":
@@ -121,43 +111,29 @@ export function UploadAssetDialog({ children, user }: { children: React.ReactNod
             Upload a new asset to the company vault. Select the type and fill in the details.
           </DialogDescription>
         </DialogHeader>
-        <form action={handleUploadAction}>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="asset-type" className="text-right">
-                Type
-              </Label>
-              <Select onValueChange={(value: DataItemType) => setAssetType(value)} defaultValue="link">
-                <SelectTrigger id="asset-type" className="col-span-3">
-                  <SelectValue placeholder="Select an asset type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="link">Link</SelectItem>
-                  <SelectItem value="key">Environment Key</SelectItem>
-                  <SelectItem value="document">Document</SelectItem>
-                  <SelectItem value="image">Image</SelectItem>
-                </SelectContent>
-              </Select>
+        <form action={handleUploadAction} className="space-y-4 pt-4">
+            <div>
+              <Label htmlFor="title">Asset Name</Label>
+              <Input id="title" name="title" placeholder="e.g., Q3 Financial Report" required />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="title" className="text-right">
-                Name
-              </Label>
-              <Input
-                id="title"
-                name="title"
-                placeholder="e.g. Production API Key"
-                className="col-span-3"
-                required
-              />
+
+            <div>
+                <Label htmlFor="asset-type">Asset Type</Label>
+                <Select name="type" value={assetType} onValueChange={(value) => setAssetType(value as DataItemType)}>
+                    <SelectTrigger id="asset-type">
+                        <SelectValue placeholder="Select an asset type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="link">Link</SelectItem>
+                        <SelectItem value="key">Key</SelectItem>
+                        <SelectItem value="document">Document</SelectItem>
+                        <SelectItem value="image">Image</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
-            <div className="grid grid-cols-4 items-start gap-4">
-              <Label className="text-right pt-2">Content</Label>
-              <div className="col-span-3">
-                  {renderContentField()}
-              </div>
-            </div>
-          </div>
+
+          {renderContentField()}
+
           <DialogFooter>
             <SubmitButton />
           </DialogFooter>
