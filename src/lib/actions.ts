@@ -10,7 +10,7 @@ const AssetSchema = z.object({
   type: z.enum(['document', 'link', 'key', 'image']),
   link_url: z.string().optional(),
   text_content: z.string().optional(),
-  file_url: z.string().optional(),
+  file_url: z.string().optional().nullable(),
   created_by: z.string(),
   updated_by: z.string().optional().nullable(),
 });
@@ -28,6 +28,7 @@ export async function uploadAsset(formData: FormData): Promise<FormState> {
     text_content: formData.get('text_content'),
     file_url: formData.get('file_url'),
     created_by: formData.get('created_by'),
+    updated_by: formData.get('updated_by'),
   });
   
   if (!validatedFields.success) {
