@@ -38,7 +38,6 @@ export function UserManagement({ users }: UserManagementProps) {
           <TableHeader>
             <TableRow>
               <TableHead>User</TableHead>
-              <TableHead>Email</TableHead>
               <TableHead className="text-right">Admin</TableHead>
             </TableRow>
           </TableHeader>
@@ -54,7 +53,6 @@ export function UserManagement({ users }: UserManagementProps) {
                     <span className="font-medium">{user.name}</span>
                   </div>
                 </TableCell>
-                <TableCell>{user.email}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
                     <Label htmlFor={`admin-switch-${user.id}`} className="sr-only">Admin</Label>
