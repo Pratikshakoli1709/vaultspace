@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from 'react';
 import type { User, DataItem, ActivityLog } from "@/lib/types";
 import type { EnrichedDataItem, EnrichedActivityLog } from "@/lib/data";

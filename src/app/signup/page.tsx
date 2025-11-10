@@ -67,6 +67,8 @@ export default function SignupPage() {
                 data: {
                     full_name: name,
                 },
+                // This link will be sent to the user's email to confirm their account
+                emailRedirectTo: `${location.origin}/auth/callback`,
             },
         })
 
