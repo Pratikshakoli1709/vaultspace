@@ -21,25 +21,25 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import type { AssetType, User, Asset, ActivityLog } from "@/lib/types"
+import type { DataItemType, User, DataItem, ActivityLog } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { getCurrentUser } from "@/lib/data"
 
 
 export function UploadAssetDialog({ children }: { children: React.ReactNode }) {
-  const [assetType, setAssetType] = useState<AssetType>("link")
+  const [assetType, setAssetType] = useState<DataItemType>("link")
   const [open, setOpen] = useState(false)
   const { toast } = useToast()
   
-  const nameRef = useRef<HTMLInputElement>(null)
+  const titleRef = useRef<HTMLInputElement>(null)
   const contentRef = useRef<HTMLInputElement & HTMLTextAreaElement>(null)
 
   const handleUpload = () => {
     const currentUser = getCurrentUser(); // In real app, get from session
-    const name = nameRef.current?.value;
-    const content = contentRef.current?.value;
+    const title = titleRef.current?.value;
+    const contentValue = contentRef.current?.value;
 
-    if (!name || !content) {
+    if (!title || !contentValue) {
         toast({
             variant: "destructive",
             title: "Missing fields",
@@ -48,24 +48,40 @@ export function UploadAssetDialog({ children }: { children: React.ReactNode }) {
         return;
     }
 
-    const newAsset: Asset & { uploader: User } = {
-        id: `asset-${Date.now()}`,
-        name,
+    const now = new Date().toISOString();
+    const newAsset: DataItem & { uploader: User } = {
+        id: `item-${Date.now()}`,
+        title,
         type: assetType,
-        content: assetType === 'image' ? 'https://picsum.photos/seed/placeholder/400/300' : content,
-        uploaderId: currentUser.id,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        created_by: currentUser.id,
+        created_at: now,
+        updated_at: now,
         uploader: currentUser,
     };
+    
+    switch(assetType) {
+        case 'link':
+            newAsset.link_url = contentValue;
+            break;
+        case 'key':
+            newAsset.text_content = contentValue;
+            break;
+        case 'image':
+            newAsset.file_url = 'https://picsum.photos/seed/placeholder/400/300';
+            break;
+        case 'document':
+             newAsset.file_url = '/placeholder.pdf';
+             break;
+    }
+
 
     const newLog: ActivityLog & { user: User } = {
         id: `log-${Date.now()}`,
-        userId: currentUser.id,
+        user_id: currentUser.id,
         action: 'UPLOADED',
-        assetId: newAsset.id,
-        assetName: newAsset.name,
-        timestamp: new Date().toISOString(),
+        item_id: newAsset.id,
+        item_title: newAsset.title,
+        timestamp: now,
         user: currentUser,
     };
 
@@ -75,7 +91,7 @@ export function UploadAssetDialog({ children }: { children: React.ReactNode }) {
 
     toast({
         title: "Asset Uploaded",
-        description: `"${name}" has been added to the vault.`,
+        description: `"${title}" has been added to the vault.`,
     });
     setOpen(false); // Close the dialog
   }
@@ -88,6 +104,7 @@ export function UploadAssetDialog({ children }: { children: React.ReactNode }) {
           <div className="grid w-full max-w-sm items-center gap-1.5">
             <Label htmlFor="file">File</Label>
             <Input id="file" type="file" ref={contentRef} />
+            <p className="text-xs text-muted-foreground">This is for demonstration purposes. File content is not actually uploaded.</p>
           </div>
         )
       case "link":
@@ -131,7 +148,7 @@ export function UploadAssetDialog({ children }: { children: React.ReactNode }) {
             <Label htmlFor="asset-type" className="text-right">
               Type
             </Label>
-            <Select onValueChange={(value: AssetType) => setAssetType(value)} defaultValue="link">
+            <Select onValueChange={(value: DataItemType) => setAssetType(value)} defaultValue="link">
               <SelectTrigger id="asset-type" className="col-span-3">
                 <SelectValue placeholder="Select an asset type" />
               </SelectTrigger>
@@ -149,7 +166,7 @@ export function UploadAssetDialog({ children }: { children: React.ReactNode }) {
             </Label>
             <Input
               id="name"
-              ref={nameRef}
+              ref={titleRef}
               placeholder="e.g. Production API Key"
               className="col-span-3"
             />

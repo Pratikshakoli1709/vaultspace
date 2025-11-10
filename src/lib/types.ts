@@ -6,34 +6,39 @@ export type User = {
   email: string;
   avatarUrl: string;
   role: UserRole;
+  createdAt: string;
 };
 
-export type AssetType = 'document' | 'link' | 'key' | 'image';
+export type DataItemType = 'document' | 'link' | 'key' | 'image';
 
-export type Asset = {
+export type DataItem = {
   id: string;
-  name:string;
-  type: AssetType;
-  content: string; // URL for image/doc, the link itself, or the key value
-  uploaderId: string;
-  createdAt: string;
-  updatedAt: string;
+  title: string;
+  type: DataItemType;
+  file_url?: string;
+  link_url?: string;
+  text_content?: string;
+  created_by: string; // user id
+  updated_by?: string; // user id
+  created_at: string;
+  updated_at: string;
 };
 
 export type ActivityLog = {
   id: string;
-  userId: string;
+  user_id: string;
+  item_id?: string;
   action: string;
-  assetId?: string;
-  assetName?: string;
+  item_title?: string;
   timestamp: string;
 };
 
 export type Notification = {
   id: string;
-  title: string;
+  sender_id: string; // user id or 'system'
+  receiver_id?: string; // user id, null for broadcast
   message: string;
   type: 'broadcast' | 'personal';
-  sender: string; // Could be 'System' or a user's name
+  is_read: boolean;
   timestamp: string;
 }

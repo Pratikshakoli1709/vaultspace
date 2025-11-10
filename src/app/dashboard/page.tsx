@@ -9,7 +9,7 @@ import { AppSidebar } from '@/components/common/AppSidebar';
 import { Header } from '@/components/common/Header';
 import { Dashboard } from '@/components/dashboard/Dashboard';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-import { getCurrentUser, getUsers, getAssetsWithUploader, getActivityLogsWithUser, getNotifications } from '@/lib/data';
+import { getCurrentUser, getUsers, getDataItemsWithUploader, getActivityLogsWithUser, getNotifications, EnrichedDataItem, EnrichedActivityLog, EnrichedNotification } from '@/lib/data';
 import type { User } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -53,11 +53,11 @@ export default function DashboardPage() {
     );
   }
 
-  // In a real app, user data would come from an auth session.
+  // In a real app, this data would come from Supabase queries.
   const users = getUsers();
-  const assets = getAssetsWithUploader();
-  const activityLogs = getActivityLogsWithUser();
-  const notifications = getNotifications();
+  const assets: EnrichedDataItem[] = getDataItemsWithUploader();
+  const activityLogs: EnrichedActivityLog[] = getActivityLogsWithUser();
+  const notifications: EnrichedNotification[] = getNotifications();
 
   return (
     <SidebarProvider>

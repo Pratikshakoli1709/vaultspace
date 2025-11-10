@@ -9,10 +9,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import type { ActivityLog, User } from "@/lib/types";
+import { EnrichedActivityLog } from "@/lib/data";
 import { formatDistanceToNow } from "date-fns";
-
-type EnrichedActivityLog = ActivityLog & { user?: User };
 
 interface ActivityLogListProps {
   activityLogs: EnrichedActivityLog[];
@@ -64,7 +62,7 @@ export function ActivityLogList({ activityLogs }: ActivityLogListProps) {
                     {log.action}
                   </Badge>
                 </TableCell>
-                <TableCell className="hidden md:table-cell">{log.assetName || "N/A"}</TableCell>
+                <TableCell className="hidden md:table-cell">{log.item_title || "N/A"}</TableCell>
                 <TableCell className="text-right">
                   {formatDistanceToNow(new Date(log.timestamp), { addSuffix: true })}
                 </TableCell>

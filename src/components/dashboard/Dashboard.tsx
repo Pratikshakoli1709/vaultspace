@@ -1,18 +1,17 @@
 import { useState, useEffect } from 'react';
-import type { User, Asset, ActivityLog } from "@/lib/types";
+import type { User, DataItem, ActivityLog } from "@/lib/types";
+import type { EnrichedDataItem, EnrichedActivityLog } from "@/lib/data";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AssetList } from "./AssetList";
 import { UserManagement } from "./UserManagement";
 import { ActivityLogList } from "./ActivityLog";
 
-type EnrichedAsset = Asset & { uploader?: User };
-type EnrichedActivityLog = ActivityLog & { user?: User };
 
 interface DashboardProps {
   currentUser: User;
   users: User[];
-  assets: EnrichedAsset[];
+  assets: EnrichedDataItem[];
   activityLogs: EnrichedActivityLog[];
 }
 

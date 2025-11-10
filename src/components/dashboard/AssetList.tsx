@@ -19,35 +19,35 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Copy, Eye, Trash2, Edit, ExternalLink } from "lucide-react";
-import { Asset, User } from "@/lib/types";
+import { DataItem, User } from "@/lib/types";
 import { formatDistanceToNow } from "date-fns";
 import { AssetTypeIcon } from "../icons";
 import { useToast } from "@/hooks/use-toast";
 import { AssetPreviewDialog } from "./AssetPreviewDialog";
-
-type EnrichedAsset = Asset & { uploader?: User };
+import { EnrichedDataItem } from "@/lib/data";
 
 interface AssetListProps {
-  assets: EnrichedAsset[];
+  assets: EnrichedDataItem[];
   currentUser: User;
 }
 
 export function AssetList({ assets, currentUser }: AssetListProps) {
     const { toast } = useToast();
-    const [previewingAsset, setPreviewingAsset] = useState<Asset | null>(null);
+    const [previewingAsset, setPreviewingAsset] = useState<DataItem | null>(null);
 
-    const handleCopy = (asset: Asset) => {
-        navigator.clipboard.writeText(asset.content);
+    const handleCopy = (asset: DataItem) => {
+        if (!asset.text_content) return;
+        navigator.clipboard.writeText(asset.text_content);
         toast({
             title: "Key Copied",
-            description: `The key for "${asset.name}" has been copied to your clipboard.`,
+            description: `The key for "${asset.title}" has been copied to your clipboard.`,
         });
         // In a real app, you would call a server action here to log this event.
-        console.log(`ACTION: User ${currentUser.name} copied key for ${asset.name}. This should be logged.`);
+        console.log(`ACTION: User ${currentUser.name} copied key for ${asset.title}. This should be logged.`);
     };
 
-    const canPerformAction = (asset: Asset) => {
-      return currentUser.role === 'admin' || currentUser.id === asset.uploaderId;
+    const canPerformAction = (asset: DataItem) => {
+      return currentUser.role === 'admin' || currentUser.id === asset.created_by;
     }
 
   return (
@@ -70,7 +70,7 @@ export function AssetList({ assets, currentUser }: AssetListProps) {
                 <div className="flex items-center gap-3">
                   <AssetTypeIcon type={asset.type} className="h-5 w-5 text-muted-foreground" />
                   <div className="flex flex-col">
-                      <span className="font-medium">{asset.name}</span>
+                      <span className="font-medium">{asset.title}</span>
                       <Badge variant="outline" className="w-fit mt-1">{asset.type}</Badge>
                   </div>
                 </div>
@@ -85,7 +85,7 @@ export function AssetList({ assets, currentUser }: AssetListProps) {
                 </div>
               </TableCell>
               <TableCell className="hidden lg:table-cell">
-                {formatDistanceToNow(new Date(asset.updatedAt), { addSuffix: true })}
+                {formatDistanceToNow(new Date(asset.updated_at), { addSuffix: true })}
               </TableCell>
               <TableCell>
                 <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
@@ -98,7 +98,7 @@ export function AssetList({ assets, currentUser }: AssetListProps) {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       {asset.type === 'key' && <DropdownMenuItem onSelect={() => handleCopy(asset)}><Copy className="mr-2 h-4 w-4"/>Copy Key</DropdownMenuItem>}
-                      {asset.type === 'link' && <DropdownMenuItem asChild><a href={asset.content} target="_blank" rel="noopener noreferrer"><ExternalLink className="mr-2 h-4 w-4"/>Open Link</a></DropdownMenuItem>}
+                      {asset.type === 'link' && asset.link_url && <DropdownMenuItem asChild><a href={asset.link_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="mr-2 h-4 w-4"/>Open Link</a></DropdownMenuItem>}
                       {(asset.type === 'image' || asset.type === 'document') && <DropdownMenuItem onSelect={() => setPreviewingAsset(asset)}><Eye className="mr-2 h-4 w-4"/>Preview</DropdownMenuItem>}
                       
                       {canPerformAction(asset) && (
