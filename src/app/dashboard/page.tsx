@@ -7,33 +7,43 @@ import { Dashboard } from '@/components/dashboard/Dashboard';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { getUsers, getDataItemsWithUploader, getActivityLogsWithUser, getNotifications, type EnrichedDataItem, type EnrichedActivityLog, type EnrichedNotification } from '@/lib/data';
 import type { User } from '@/lib/types';
-import { Skeleton } from '@/components/ui/skeleton';
-
 
 export default async function DashboardPage() {
-  // const supabase = createClient();
+  const supabase = createClient();
 
-  // const { data: { user: authUser }, error } = await supabase.auth.getUser();
+  const { data: { user: authUser }, error } = await supabase.auth.getUser();
 
-  // if (error || !authUser) {
-  //   redirect('/login');
-  // }
-
-  // At this point, we have an authenticated user.
-  // We can use their info. In a real app, you'd fetch profile from your own 'users' table.
-  // For now, we'll construct a user object from the auth data.
-  // We will temporarily give the user an 'admin' role to see all features.
-  const currentUser: User = {
-    id: 'user-1-mock',
-    name: 'Admin Preview',
-    email: 'admin@example.com',
-    role: 'admin', // TEMPORARY: Hardcoded for preview
-    createdAt: new Date().toISOString(),
-    avatarUrl: `https://i.pravatar.cc/150?u=admin-preview`,
+  if (error || !authUser) {
+    redirect('/login');
   }
 
+  // Fetch the user's profile from your 'profiles' table
+  const { data: userProfile, error: profileError } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', authUser.id)
+    .single();
+
+  if (profileError || !userProfile) {
+    // Handle cases where profile doesn't exist or there was an error
+    // For now, we'll redirect to login, but you might want a better error page
+    console.error('Error fetching profile:', profileError);
+    redirect('/login?error=Could not fetch user profile.');
+  }
+  
+  const currentUser: User = {
+    id: userProfile.id,
+    name: userProfile.full_name || 'No Name',
+    email: authUser.email!,
+    avatarUrl: userProfile.avatar_url || `https://i.pravatar.cc/150?u=${userProfile.id}`,
+    role: userProfile.role || 'user',
+    createdAt: userProfile.created_at,
+  };
+
+
   // In a real app, this data would come from Supabase queries.
-  const allUsers = getUsers();
+  // For now, we will continue to use mock data for these lists.
+  const allUsers = await getUsers();
   const assets: EnrichedDataItem[] = getDataItemsWithUploader();
   const activityLogs: EnrichedActivityLog[] = getActivityLogsWithUser();
   const notifications: EnrichedNotification[] = getNotifications();

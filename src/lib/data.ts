@@ -1,9 +1,10 @@
 import { User, DataItem, ActivityLog, Notification, DataItemType, UserRole } from './types';
+import { createClient } from './supabase/server';
 
 // NOTE: This mock data is for UI prototyping.
 // It does not interact with the Supabase database.
 
-const users: User[] = [
+const mockUsers: User[] = [
   {
     id: 'user-1',
     name: 'Alex Johnson',
@@ -100,14 +101,31 @@ const notifications: Notification[] = [
   },
 ];
 
-// This function now only returns the list of all mock users for display purposes.
-// The currently logged-in user is determined by Supabase auth.
-export const getUsers = (): User[] => users;
+// This function now fetches all profiles from your Supabase 'profiles' table.
+export const getUsers = async (): Promise<User[]> => {
+  const supabase = createClient();
+  const { data, error } = await supabase.from('profiles').select('*');
+  
+  if (error) {
+    console.error('Error fetching users:', error);
+    return mockUsers; // Fallback to mock data on error
+  }
+
+  // Map Supabase profile data to the User type
+  return data.map(profile => ({
+    id: profile.id,
+    name: profile.full_name || 'No Name',
+    email: 'not-available', // Email is in auth.users, not profiles table
+    avatarUrl: profile.avatar_url || `https://i.pravatar.cc/150?u=${profile.id}`,
+    role: profile.role || 'user',
+    createdAt: profile.created_at,
+  }));
+};
 
 export type EnrichedDataItem = DataItem & { uploader?: User };
 export const getDataItemsWithUploader = (): EnrichedDataItem[] => {
   return dataItems.map(item => {
-    const uploader = users.find(user => user.id === item.created_by);
+    const uploader = mockUsers.find(user => user.id === item.created_by);
     return { ...item, uploader };
   }).sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
 };
@@ -115,7 +133,7 @@ export const getDataItemsWithUploader = (): EnrichedDataItem[] => {
 export type EnrichedActivityLog = ActivityLog & { user?: User };
 export const getActivityLogsWithUser = (): EnrichedActivityLog[] => {
     return activityLogs.map(log => {
-        const user = users.find(u => u.id === log.user_id);
+        const user = mockUsers.find(u => u.id === log.user_id);
         return { ...log, user };
     }).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 };
@@ -123,7 +141,7 @@ export const getActivityLogsWithUser = (): EnrichedActivityLog[] => {
 export type EnrichedNotification = Notification & { sender_details?: User };
 export const getNotifications = (): EnrichedNotification[] => {
   return notifications.map(notif => {
-    const sender = users.find(u => u.id === notif.sender_id);
+    const sender = mockUsers.find(u => u.id === notif.sender_id);
     return { ...notif, sender_details: sender };
   }).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 }
