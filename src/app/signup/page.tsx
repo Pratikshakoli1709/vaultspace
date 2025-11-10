@@ -40,7 +40,7 @@ function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
     )
   }
 
-export default function LoginPage() {
+export default function SignupPage() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
       <Card className="mx-auto max-w-sm w-full">
@@ -49,28 +49,27 @@ export default function LoginPage() {
                 <HardDrive className="size-8 text-primary" />
                 <h1 className="text-3xl font-bold">VaultSpace</h1>
             </div>
-          <CardTitle className="text-2xl pt-4">Welcome Back</CardTitle>
+          <CardTitle className="text-2xl pt-4">Create an Account</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Enter your information to create an account
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
+              <Input id="name" placeholder="John Doe" required />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" placeholder="m@example.com" required />
             </div>
             <div className="space-y-2">
-              <div className="flex items-center">
-                <Label htmlFor="password">Password</Label>
-                <Link href="#" className="ml-auto inline-block text-sm underline">
-                  Forgot your password?
-                </Link>
-              </div>
+              <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" required />
             </div>
             <Button type="submit" className="w-full">
-              Login
+              Create Account
             </Button>
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
@@ -78,19 +77,19 @@ export default function LoginPage() {
               </div>
               <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-background px-2 text-muted-foreground">
-                  Or continue with
+                  Or sign up with
                 </span>
               </div>
             </div>
              <Button variant="outline" className="w-full">
                 <GoogleIcon className="mr-2 h-5 w-5"/>
-                Login with Google
+                Sign up with Google
             </Button>
           </div>
           <div className="mt-4 text-center text-sm">
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="underline">
-              Sign up
+            Already have an account?{" "}
+            <Link href="/login" className="underline">
+              Login
             </Link>
           </div>
         </CardContent>
