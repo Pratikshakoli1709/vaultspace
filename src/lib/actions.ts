@@ -1,3 +1,4 @@
+
 'use server'
 
 import { createClient } from '@/lib/supabase/server';
@@ -7,9 +8,9 @@ import { z } from 'zod';
 const AssetSchema = z.object({
   title: z.string().min(1, 'Title is required.'),
   type: z.enum(['document', 'link', 'key', 'image']),
-  link_url: z.string().optional(),
+  link_url: z.string().url().optional().or(z.literal('')),
   text_content: z.string().optional(),
-  file_url: z.string().optional().nullable(),
+  file_url: z.string().url().optional().nullable(),
   created_by: z.string(),
   updated_by: z.string().optional().nullable(),
 });
