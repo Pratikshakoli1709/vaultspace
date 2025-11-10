@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
@@ -8,23 +9,20 @@ export async function GET(request: Request) {
   const next = searchParams.get('next') ?? '/dashboard'
 
   if (code) {
+    const cookieStore = cookies()
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
           get(name: string) {
-            return request.headers.get('Cookie')?.match(`(^|;)\\s*${name}\\s*=\\s*([^;]+)`)?.[2]
+            return cookieStore.get(name)?.value
           },
           set(name: string, value: string, options: CookieOptions) {
-            // If the cookie is set, update the headers
-            const response = NextResponse.redirect(`${origin}${next}`)
-            response.cookies.set(name, value, options)
+            cookieStore.set({ name, value, ...options })
           },
           remove(name: string, options: CookieOptions) {
-            // If the cookie is removed, update the headers
-            const response = NextResponse.redirect(`${origin}${next}`)
-            response.cookies.set(name, '', options)
+            cookieStore.delete({ name, ...options })
           },
         },
       }

@@ -65,8 +65,6 @@ export default function SignupPage() {
             options: {
                 data: {
                     full_name: name,
-                    // You can add a default avatar URL here if you want
-                    // avatar_url: 'https://...
                 },
             },
         })
@@ -78,12 +76,17 @@ export default function SignupPage() {
                 description: error.message,
             })
         } else if (data.user) {
+             // Supabase sends a confirmation email. 
+             // If data.user.identities is empty, it means the user signed up with email/password
+             // and needs to confirm their email.
              if (data.user.identities && data.user.identities.length === 0) {
                  toast({
                     title: "Confirmation Email Sent",
-                    description: "Please check your email to confirm your account.",
+                    description: "Please check your email to verify your account.",
                 });
+                // We don't redirect here, user must confirm email first.
              } else {
+                // This case handles social logins where the user is already confirmed.
                 toast({
                     title: "Sign-up Successful",
                     description: "Redirecting you to the dashboard...",
