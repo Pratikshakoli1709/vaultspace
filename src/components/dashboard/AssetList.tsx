@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -17,7 +18,18 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { MoreHorizontal, Copy, Eye, Trash2, Edit, ExternalLink } from "lucide-react";
 import { DataItem, User } from "@/lib/types";
 import { formatDistanceToNow } from "date-fns";
@@ -25,6 +37,7 @@ import { AssetTypeIcon } from "../icons";
 import { useToast } from "@/hooks/use-toast";
 import { AssetPreviewDialog } from "./AssetPreviewDialog";
 import { EnrichedDataItem } from "@/lib/data";
+import { deleteAsset, logActivity } from "@/lib/actions";
 
 interface AssetListProps {
   assets: EnrichedDataItem[];
@@ -34,6 +47,7 @@ interface AssetListProps {
 export function AssetList({ assets, currentUser }: AssetListProps) {
     const { toast } = useToast();
     const [previewingAsset, setPreviewingAsset] = useState<DataItem | null>(null);
+    const [deletingAsset, setDeletingAsset] = useState<DataItem | null>(null);
 
     const handleCopy = (asset: DataItem) => {
         if (!asset.text_content) return;
@@ -42,9 +56,34 @@ export function AssetList({ assets, currentUser }: AssetListProps) {
             title: "Key Copied",
             description: `The key for "${asset.title}" has been copied to your clipboard.`,
         });
-        // In a real app, you would call a server action here to log this event.
-        console.log(`ACTION: User ${currentUser.name} copied key for ${asset.title}. This should be logged.`);
+        logActivity({
+          user_id: currentUser.id,
+          action: 'COPIED',
+          item_id: asset.id,
+          item_title: asset.title
+        });
     };
+    
+    const handleDelete = async () => {
+        if (!deletingAsset) return;
+        
+        await deleteAsset(deletingAsset.id);
+
+        toast({
+            title: "Asset Deleted",
+            description: `"${deletingAsset.title}" has been permanently removed.`,
+        });
+
+        // Log the activity
+        logActivity({
+          user_id: currentUser.id,
+          action: 'DELETED',
+          item_id: deletingAsset.id,
+          item_title: deletingAsset.title
+        });
+
+        setDeletingAsset(null);
+    }
 
     const canPerformAction = (asset: DataItem) => {
       return currentUser.role === 'admin' || currentUser.id === asset.created_by;
@@ -103,8 +142,12 @@ export function AssetList({ assets, currentUser }: AssetListProps) {
                       
                       {canPerformAction(asset) && (
                           <>
-                              <DropdownMenuItem><Edit className="mr-2 h-4 w-4"/>Edit</DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4"/>Delete</DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem disabled><Edit className="mr-2 h-4 w-4"/>Edit</DropdownMenuItem>
+                              <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => setDeletingAsset(asset)}>
+                                <Trash2 className="mr-2 h-4 w-4"/>
+                                <span>Delete</span>
+                              </DropdownMenuItem>
                           </>
                       )}
                     </DropdownMenuContent>
@@ -115,7 +158,25 @@ export function AssetList({ assets, currentUser }: AssetListProps) {
           ))}
         </TableBody>
       </Table>
+
       <AssetPreviewDialog asset={previewingAsset} onOpenChange={(open) => !open && setPreviewingAsset(null)} />
+      
+      <AlertDialog open={!!deletingAsset} onOpenChange={(open) => !open && setDeletingAsset(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the asset
+                    <span className="font-bold"> &quot;{deletingAsset?.title}&quot; </span>
+                    from the servers.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

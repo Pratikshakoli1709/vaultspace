@@ -5,47 +5,25 @@ import { AppSidebar } from '@/components/common/AppSidebar';
 import { Header } from '@/components/common/Header';
 import { Dashboard } from '@/components/dashboard/Dashboard';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-import { getUsers, getDataItemsWithUploader, getActivityLogsWithUser, getNotifications, type EnrichedDataItem, type EnrichedActivityLog, type EnrichedNotification } from '@/lib/data';
+import { getRealUsers, getRealDataItems, getRealActivityLogs, getNotifications, type EnrichedDataItem, type EnrichedActivityLog, type EnrichedNotification } from '@/lib/data';
 import type { User } from '@/lib/types';
 
 export default async function DashboardPage() {
   const supabase = createClient();
 
-  const { data: { user: authUser }, error } = await supabase.auth.getUser();
-
-  if (error || !authUser) {
-    redirect('/login');
-  }
-
-  // Fetch the user's profile from your 'profiles' table
-  const { data: userProfile, error: profileError } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', authUser.id)
-    .single();
-
-  if (profileError || !userProfile) {
-    // Handle cases where profile doesn't exist or there was an error
-    // For now, we'll redirect to login, but you might want a better error page
-    console.error('Error fetching profile:', profileError);
-    redirect('/login?error=Could not fetch user profile.');
-  }
-  
+  // Using a mock user as requested to bypass login for now.
   const currentUser: User = {
-    id: userProfile.id,
-    name: userProfile.full_name || 'No Name',
-    email: authUser.email!,
-    avatarUrl: userProfile.avatar_url || `https://i.pravatar.cc/150?u=${userProfile.id}`,
-    role: userProfile.role || 'user',
-    createdAt: userProfile.created_at,
+    id: 'user-1',
+    name: 'Alex Johnson (Admin)',
+    email: 'alex.j@example.com',
+    avatarUrl: 'https://i.pravatar.cc/150?u=user-1',
+    role: 'admin',
+    createdAt: '2024-07-20T10:00:00Z',
   };
 
-
-  // In a real app, this data would come from Supabase queries.
-  // For now, we will continue to use mock data for these lists.
-  const allUsers = await getUsers();
-  const assets: EnrichedDataItem[] = getDataItemsWithUploader();
-  const activityLogs: EnrichedActivityLog[] = getActivityLogsWithUser();
+  const allUsers = await getRealUsers();
+  const assets = await getRealDataItems();
+  const activityLogs = await getRealActivityLogs();
   const notifications: EnrichedNotification[] = getNotifications();
 
   return (

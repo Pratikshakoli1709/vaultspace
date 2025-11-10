@@ -1,14 +1,13 @@
-"use client";
 
-import { useState, useEffect } from 'react';
-import type { User, DataItem, ActivityLog } from "@/lib/types";
+'use client';
+
+import type { User } from "@/lib/types";
 import type { EnrichedDataItem, EnrichedActivityLog } from "@/lib/data";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AssetList } from "./AssetList";
 import { UserManagement } from "./UserManagement";
 import { ActivityLogList } from "./ActivityLog";
-
 
 interface DashboardProps {
   currentUser: User;
@@ -17,24 +16,7 @@ interface DashboardProps {
   activityLogs: EnrichedActivityLog[];
 }
 
-export function Dashboard({ currentUser, users, assets: initialAssets, activityLogs: initialActivityLogs }: DashboardProps) {
-  const [assets, setAssets] = useState(initialAssets);
-  const [activityLogs, setActivityLogs] = useState(initialActivityLogs);
-
-  useEffect(() => {
-    // This is where you would subscribe to real-time updates from your backend
-    // For now, we are simulating updates via document events
-    const handleAssetUpdate = (event: Event) => {
-      const { asset, log } = (event as CustomEvent).detail;
-      setAssets(prevAssets => [asset, ...prevAssets]);
-      setActivityLogs(prevLogs => [log, ...prevLogs]);
-    };
-
-    document.addEventListener('assetUploaded', handleAssetUpdate);
-    return () => {
-      document.removeEventListener('assetUploaded', handleAssetUpdate);
-    };
-  }, []);
+export function Dashboard({ currentUser, users, assets, activityLogs }: DashboardProps) {
 
   if (currentUser.role === 'admin') {
     return (
