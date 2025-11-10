@@ -79,15 +79,17 @@ export default function SignupPage() {
                 description: error.message,
             })
         } else if (data.user) {
-             // Supabase sends a confirmation email. 
+             // Supabase sends a confirmation email.
              // If data.user.identities is empty, it means the user signed up with email/password
              // and needs to confirm their email.
              if (data.user.identities && data.user.identities.length === 0) {
                  toast({
                     title: "Confirmation Email Sent",
-                    description: "Please check your email to verify your account.",
+                    description: "Please check your email to verify your account before logging in.",
                 });
                 // We don't redirect here, user must confirm email first.
+                // We can optionally redirect them to the login page.
+                router.push('/login');
              } else {
                 // This case handles social logins where the user is already confirmed.
                 toast({
@@ -102,12 +104,14 @@ export default function SignupPage() {
     }
 
     const handleGoogleSignUp = async () => {
+        setIsLoading(true);
         await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
               redirectTo: `${location.origin}/auth/callback`,
             },
         })
+        // No need to set isLoading to false here, as the page will redirect.
     }
 
 

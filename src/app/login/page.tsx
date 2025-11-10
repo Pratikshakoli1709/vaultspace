@@ -79,12 +79,14 @@ export default function LoginPage() {
     }
 
     const handleGoogleLogin = async () => {
+        setIsLoading(true);
         await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
               redirectTo: `${location.origin}/auth/callback`,
             },
         })
+        // No need to set isLoading to false here, as the page will redirect.
     }
 
   return (
