@@ -114,7 +114,7 @@ export const getRealUsers = async (): Promise<User[]> => {
   return data.map(profile => ({
     id: profile.id,
     name: profile.full_name || 'No Name',
-    email: 'not-available', // Not in profiles table
+    email: profile.email || 'not-available',
     avatarUrl: profile.avatar_url || `https://i.pravatar.cc/150?u=${profile.id}`,
     role: profile.role || 'user',
     createdAt: profile.created_at,
