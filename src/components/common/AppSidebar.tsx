@@ -27,6 +27,7 @@ export function AppSidebar({ user }: { user: User }) {
     
     const dashboardPath = user.role === 'admin' ? '/adminDashboard' : '/userDashboard';
     const settingsPath = `/settings?name=${encodeURIComponent(user.name)}`;
+    const adminPanelPath = `/adminDashboard?tab=users`;
 
 
     return (
@@ -51,10 +52,12 @@ export function AppSidebar({ user }: { user: User }) {
                     </SidebarMenuItem>
                     {user.role === 'admin' && (
                         <SidebarMenuItem>
-                            <SidebarMenuButton tooltip="Admin Panel">
-                                <Shield />
-                                <span>Admin Panel</span>
-                            </SidebarMenuButton>
+                            <Link href={adminPanelPath}>
+                                <SidebarMenuButton tooltip="Admin Panel" isActive={pathname.includes('adminDashboard') && new URLSearchParams(window.location.search).get('tab') === 'users'}>
+                                    <Shield />
+                                    <span>Admin Panel</span>
+                                </SidebarMenuButton>
+                            </Link>
                         </SidebarMenuItem>
                     )}
                     <SidebarMenuItem>

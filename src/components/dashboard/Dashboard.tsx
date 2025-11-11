@@ -1,22 +1,19 @@
+
 'use client';
 
 import type { User } from "@/lib/types";
 import type { EnrichedDataItem, EnrichedActivityLog } from "@/lib/data";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AssetList } from "./AssetList";
-import { UserManagement } from "./UserManagement";
-import { ActivityLogList } from "./ActivityLog";
 import { Activity, Archive, Users } from "lucide-react";
 
 interface DashboardProps {
   currentUser: User;
-  users: User[];
   assets: EnrichedDataItem[];
   activityLogs: EnrichedActivityLog[];
 }
 
-export function Dashboard({ currentUser, users, assets, activityLogs }: DashboardProps) {
+export function Dashboard({ currentUser, assets, activityLogs }: DashboardProps) {
 
   const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
     <Card>
@@ -29,43 +26,6 @@ export function Dashboard({ currentUser, users, assets, activityLogs }: Dashboar
       </CardContent>
     </Card>
   );
-
-  if (currentUser.role === 'admin') {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <StatCard title="Total Users" value={users.length} icon={Users} />
-          <StatCard title="Total Assets" value={assets.length} icon={Archive} />
-          <StatCard title="Logged Activities" value={activityLogs.length} icon={Activity} />
-        </div>
-        <Tabs defaultValue="assets">
-          <TabsList className="grid w-full grid-cols-3 max-w-md">
-            <TabsTrigger value="assets">All Assets</TabsTrigger>
-            <TabsTrigger value="activity">Activity Log</TabsTrigger>
-            <TabsTrigger value="users">User Management</TabsTrigger>
-          </TabsList>
-          <TabsContent value="assets">
-            <Card>
-              <CardHeader>
-                <CardTitle>All Company Assets</CardTitle>
-                <CardDescription>Browse and manage all shared digital assets.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <AssetList assets={assets} currentUser={currentUser} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="activity">
-            <ActivityLogList activityLogs={activityLogs} />
-          </TabsContent>
-          <TabsContent value="users">
-            <UserManagement users={users} />
-          </TabsContent>
-        </Tabs>
-      </div>
-    );
-  }
 
   // Regular user view
   return (

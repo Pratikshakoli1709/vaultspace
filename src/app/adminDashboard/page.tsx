@@ -2,15 +2,15 @@
 'use client'
 
 import React from 'react';
-import { useSearchParams } from 'next/navigation';
 import { AppSidebar } from '@/components/common/AppSidebar';
 import { Header } from '@/components/common/Header';
-import { Dashboard } from '@/components/dashboard/Dashboard';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import type { EnrichedNotification, EnrichedDataItem } from '@/lib/data';
 import { getNotifications } from '@/lib/data';
 import type { User, DataItem } from '@/lib/types';
 import { getMockUsers, getMockDataItems, getMockActivityLogs } from '@/lib/mock-data';
+import { useSearchParams } from 'next/navigation';
+import { ControlledDashboard } from '@/components/dashboard/ControlledDashboard';
 
 function AdminDashboardPageContent() {
   const searchParams = useSearchParams();
@@ -51,7 +51,7 @@ function AdminDashboardPageContent() {
                 <SidebarInset>
                     <Header user={currentUser} notifications={notifications} onAssetUpload={handleAssetUpload} onUserUpdate={setCurrentUser} />
                     <main className="flex-1 p-4 sm:p-6 lg:p-8">
-                        <Dashboard
+                        <ControlledDashboard
                             currentUser={currentUser}
                             users={allUsers}
                             assets={assets}
