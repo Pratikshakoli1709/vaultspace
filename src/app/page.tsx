@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/common/Logo';
+import { ThemeToggle } from '@/components/common/ThemeToggle';
 import {
   ShieldCheck,
   Users,
@@ -10,6 +11,7 @@ import {
   KeyRound,
   Link2,
   Image,
+  Lock,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -85,11 +87,15 @@ export default function Home() {
     <div className="flex min-h-screen w-full flex-col bg-background text-foreground">
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur-sm">
         <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-3">
             <Logo />
-            <span className="text-lg font-semibold">VaultSpace</span>
+            <div className="flex flex-col">
+              <span className="text-lg font-semibold">VaultSpace</span>
+              <span className="text-xs text-muted-foreground">Secure Data Management</span>
+            </div>
           </Link>
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <Button variant="ghost" asChild>
               <Link href="/login">Sign In</Link>
             </Button>
@@ -101,6 +107,32 @@ export default function Home() {
       </header>
 
       <main className="flex-1">
+        <section className="relative w-full overflow-hidden py-20 sm:py-32 lg:py-40">
+          <div className="container mx-auto max-w-7xl px-4 text-center">
+            <div className="flex flex-col items-center gap-6">
+                <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
+                    <Lock className="mr-2 h-4 w-4"/>
+                    Enterprise-Grade Security
+                </div>
+              <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl">
+                Your Company's Data, <br className="md:hidden" />
+                <span className="text-blue-400">Secured & Centralized</span>
+              </h1>
+              <p className="max-w-2xl text-lg text-muted-foreground sm:text-xl">
+                VaultSpace provides a single, secure platform to store documents, environment keys, URLs, and critical company data with role-based access and complete audit trails.
+              </p>
+              <div className="flex flex-col gap-4 sm:flex-row">
+                <Button size="lg" asChild className="bg-blue-500 hover:bg-blue-600 text-white shadow-lg">
+                  <Link href="/login">Login</Link>
+                </Button>
+                <Button size="lg" variant="outline" asChild>
+                  <Link href="/signup">Get Started</Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section className="container mx-auto max-w-7xl px-4 py-16 sm:py-24 lg:py-32">
             <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
                 {primaryFeatures.map((feature) => (
