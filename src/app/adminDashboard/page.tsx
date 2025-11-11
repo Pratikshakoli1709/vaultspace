@@ -1,7 +1,7 @@
 
 'use client'
 
-import React, 'react';
+import React from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AppSidebar } from '@/components/common/AppSidebar';
 import { Header } from '@/components/common/Header';
