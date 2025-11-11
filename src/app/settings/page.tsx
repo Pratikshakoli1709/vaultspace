@@ -1,7 +1,7 @@
 
 'use client'
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AppSidebar } from '@/components/common/AppSidebar';
 import { Header } from '@/components/common/Header';
@@ -14,12 +14,19 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { useTheme } from 'next-themes';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 function SettingsPageContent() {
   const searchParams = useSearchParams();
   const name = searchParams.get('name');
   const { theme, setTheme } = useTheme();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
 
   // This would typically come from a global state or auth context
   const [currentUser, setCurrentUser] = React.useState<User>({
@@ -74,11 +81,19 @@ function SettingsPageContent() {
                             <CardContent>
                                 <div className="space-y-2">
                                     <Label>Theme</Label>
-                                    <div className="flex items-center space-x-2">
-                                         <Button variant={theme === 'light' ? 'default' : 'outline'} onClick={() => setTheme('light')}>Light</Button>
-                                         <Button variant={theme === 'dark' ? 'default' : 'outline'} onClick={() => setTheme('dark')}>Dark</Button>
-                                         <Button variant={theme === 'system' ? 'default' : 'outline'} onClick={() => setTheme('system')}>System</Button>
-                                    </div>
+                                    {isMounted ? (
+                                      <div className="flex items-center space-x-2">
+                                           <Button variant={theme === 'light' ? 'default' : 'outline'} onClick={() => setTheme('light')}>Light</Button>
+                                           <Button variant={theme === 'dark' ? 'default' : 'outline'} onClick={() => setTheme('dark')}>Dark</Button>
+                                           <Button variant={theme === 'system' ? 'default' : 'outline'} onClick={() => setTheme('system')}>System</Button>
+                                      </div>
+                                    ) : (
+                                      <div className="flex items-center space-x-2">
+                                        <Skeleton className="h-10 w-[65.5px]" />
+                                        <Skeleton className="h-10 w-[60px]" />
+                                        <Skeleton className="h-10 w-[74px]" />
+                                      </div>
+                                    )}
                                 </div>
                             </CardContent>
                           </Card>
