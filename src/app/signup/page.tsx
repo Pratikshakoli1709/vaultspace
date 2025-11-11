@@ -145,9 +145,9 @@ export default function SignupPage() {
       </div>
        <div className="hidden bg-muted lg:block">
         <Image
-          src="https://picsum.photos/seed/vault-signup/1200/1800"
-          alt="Abstract image representing security and data"
-          data-ai-hint="abstract technology"
+          src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=2072&auto=format&fit=crop"
+          alt="A team of professionals collaborating in a modern workspace"
+          data-ai-hint="corporate teamwork"
           width="1200"
           height="1800"
           className="h-full w-full object-cover dark:brightness-[0.3]"
