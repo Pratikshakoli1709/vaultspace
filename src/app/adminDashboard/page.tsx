@@ -1,3 +1,4 @@
+
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { AppSidebar } from '@/components/common/AppSidebar';
@@ -8,32 +9,33 @@ import { getRealUsers, getRealDataItems, getRealActivityLogs, getNotifications, 
 import type { User } from '@/lib/types';
 
 export default async function AdminDashboardPage() {
-  const supabase = createClient();
+  // const supabase = createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  // const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    return redirect('/login');
-  }
+  // if (!user) {
+  //   return redirect('/login');
+  // }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
+  // const { data: profile } = await supabase
+  //   .from('profiles')
+  //   .select('*')
+  //   .eq('id', user.id)
+  //   .single();
 
-  if (!profile || profile.role !== 'admin') {
-    // If user is not an admin, redirect to their own dashboard
-    return redirect('/userDashboard');
-  }
+  // if (!profile || profile.role !== 'admin') {
+  //   // If user is not an admin, redirect to their own dashboard
+  //   return redirect('/userDashboard');
+  // }
 
+  // MOCK ADMIN USER FOR PREVIEW
   const currentUser: User = {
-    id: user.id,
-    name: profile.full_name || 'Admin',
-    email: user.email || 'No email',
-    avatarUrl: profile.avatar_url || `https://i.pravatar.cc/150?u=${user.id}`,
+    id: 'user-1',
+    name: 'Alex Johnson',
+    email: 'alex.j@example.com',
+    avatarUrl: 'https://i.pravatar.cc/150?u=user-1',
     role: 'admin',
-    createdAt: user.created_at,
+    createdAt: '2024-07-20T10:00:00Z',
   };
 
   const allUsers = await getRealUsers();

@@ -1,3 +1,4 @@
+
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { AppSidebar } from '@/components/common/AppSidebar';
@@ -8,32 +9,33 @@ import { getRealDataItems, getRealActivityLogs, getNotifications, type EnrichedN
 import type { User } from '@/lib/types';
 
 export default async function UserDashboardPage() {
-  const supabase = createClient();
+  // const supabase = createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  // const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    return redirect('/login');
-  }
+  // if (!user) {
+  //   return redirect('/login');
+  // }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
+  // const { data: profile } = await supabase
+  //   .from('profiles')
+  //   .select('*')
+  //   .eq('id', user.id)
+  //   .single();
 
-  if (!profile) {
-    await supabase.auth.signOut();
-    return redirect('/login?error=Profile not found. Please log in again.');
-  }
+  // if (!profile) {
+  //   await supabase.auth.signOut();
+  //   return redirect('/login?error=Profile not found. Please log in again.');
+  // }
 
+  // MOCK USER FOR PREVIEW
   const currentUser: User = {
-    id: user.id,
-    name: profile.full_name || 'User',
-    email: user.email || 'No email',
-    avatarUrl: profile.avatar_url || `https://i.pravatar.cc/150?u=${user.id}`,
-    role: profile.role || 'user',
-    createdAt: user.created_at,
+    id: 'user-2',
+    name: 'Maria Garcia',
+    email: 'maria.g@example.com',
+    avatarUrl: 'https://i.pravatar.cc/150?u=user-2',
+    role: 'user',
+    createdAt: '2024-07-21T11:30:00Z',
   };
 
   // For a regular user, we only need their assets and activities
