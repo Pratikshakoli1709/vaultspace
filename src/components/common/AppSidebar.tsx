@@ -1,7 +1,7 @@
 
 "use client"
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import {
     Sidebar,
     SidebarContent,
@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation"
 export function AppSidebar({ user }: { user: User }) {
     const router = useRouter();
     const pathname = usePathname();
+    const searchParams = useSearchParams();
 
     const handleLogout = () => {
         router.push('/');
@@ -53,7 +54,7 @@ export function AppSidebar({ user }: { user: User }) {
                     {user.role === 'admin' && (
                         <SidebarMenuItem>
                             <Link href={adminPanelPath}>
-                                <SidebarMenuButton tooltip="Admin Panel" isActive={pathname.includes('adminDashboard') && new URLSearchParams(window.location.search).get('tab') === 'users'}>
+                                <SidebarMenuButton tooltip="Admin Panel" isActive={pathname.includes('adminDashboard') && searchParams.get('tab') === 'users'}>
                                     <Shield />
                                     <span>Admin Panel</span>
                                 </SidebarMenuButton>
