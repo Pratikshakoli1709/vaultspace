@@ -19,8 +19,7 @@ import { useRouter } from "next/navigation"
 export function AppSidebar({ user }: { user: User }) {
     const router = useRouter();
 
-    const handleLogout = async () => {
-        // Since we are not using a real auth provider, just redirect to home.
+    const handleLogout = () => {
         router.push('/');
     }
 

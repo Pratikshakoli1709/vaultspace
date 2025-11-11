@@ -1,14 +1,15 @@
 
 'use client'
 
+import React from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AppSidebar } from '@/components/common/AppSidebar';
 import { Header } from '@/components/common/Header';
 import { Dashboard } from '@/components/dashboard/Dashboard';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-import { getRealDataItems, getRealActivityLogs, getNotifications, type EnrichedNotification } from '@/lib/data';
+import { getNotifications, type EnrichedNotification } from '@/lib/data';
 import type { User } from '@/lib/types';
-import React from 'react';
+import { getMockDataItems, getMockActivityLogs } from '@/lib/mock-data';
 
 
 function UserDashboardPage() {
@@ -25,10 +26,8 @@ function UserDashboardPage() {
         createdAt: '2024-07-21T11:30:00Z',
     };
 
-    // In a real app with server components, this data fetching would be awaited.
-    // Since this is a client component for the preview, we'll rely on the mock data inside the Dashboard.
-    const userAssets = [];
-    const userActivity = [];
+    const userAssets = getMockDataItems().filter(asset => asset.created_by === currentUser.id);
+    const userActivity = getMockActivityLogs().filter(log => log.user_id === currentUser.id);
     const notifications: EnrichedNotification[] = getNotifications();
 
     return (
