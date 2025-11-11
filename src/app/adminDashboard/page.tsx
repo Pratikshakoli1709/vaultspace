@@ -1,15 +1,15 @@
 
 'use client'
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AppSidebar } from '@/components/common/AppSidebar';
 import { Header } from '@/components/common/Header';
 import { Dashboard } from '@/components/dashboard/Dashboard';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-import type { EnrichedNotification } from '@/lib/data';
+import type { EnrichedNotification, EnrichedDataItem } from '@/lib/data';
 import { getNotifications } from '@/lib/data';
-import type { User } from '@/lib/types';
+import type { User, DataItem } from '@/lib/types';
 import { getMockUsers, getMockDataItems, getMockActivityLogs } from '@/lib/mock-data';
 
 function AdminDashboardPage() {
@@ -27,16 +27,25 @@ function AdminDashboardPage() {
   };
   
   const allUsers = getMockUsers();
-  const assets = getMockDataItems();
-  const activityLogs = getMockActivityLogs();
+  const [assets, setAssets] = useState<EnrichedDataItem[]>(getMockDataItems());
+  const [activityLogs, setActivityLogs] = useState(getMockActivityLogs());
   const notifications: EnrichedNotification[] = getNotifications();
+
+  const handleAssetUpload = (newAsset: DataItem) => {
+    const enrichedAsset: EnrichedDataItem = {
+      ...newAsset,
+      uploader: allUsers.find(u => u.id === newAsset.created_by)
+    }
+    setAssets(prevAssets => [enrichedAsset, ...prevAssets]);
+    // Optionally, add to activity log state as well
+  };
     
     return (
         <SidebarProvider>
             <div className="flex min-h-screen bg-background">
                 <AppSidebar user={currentUser} />
                 <SidebarInset>
-                    <Header user={currentUser} notifications={notifications} />
+                    <Header user={currentUser} notifications={notifications} onAssetUpload={handleAssetUpload} />
                     <main className="flex-1 p-4 sm:p-6 lg:p-8">
                         <Dashboard
                             currentUser={currentUser}

@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import type { DataItemType, User } from "@/lib/types"
+import type { DataItemType, User, DataItem } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { uploadAsset } from "@/lib/actions"
 import { Loader2 } from "lucide-react"
@@ -38,7 +38,7 @@ function SubmitButton() {
   );
 }
 
-export function UploadAssetDialog({ children, user }: { children: React.ReactNode, user: User }) {
+export function UploadAssetDialog({ children, user, onAssetUpload }: { children: React.ReactNode, user: User, onAssetUpload: (asset: DataItem) => void }) {
   const [assetType, setAssetType] = useState<DataItemType>("link")
   const [open, setOpen] = useState(false)
   const { toast } = useToast()
@@ -49,11 +49,12 @@ export function UploadAssetDialog({ children, user }: { children: React.ReactNod
 
     const result = await uploadAsset(formData);
 
-    if (result.success) {
+    if (result.success && result.data) {
       toast({
         title: "Asset Uploaded",
         description: `"${formData.get('title')}" has been added to the vault.`,
       });
+      onAssetUpload(result.data); // Call the callback to update parent state
       setOpen(false);
     } else {
        toast({

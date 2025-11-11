@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import type { User } from '@/lib/types';
+import type { User, DataItem } from '@/lib/types';
 import type { EnrichedNotification } from '@/lib/data';
 import { LogOut, PlusCircle, Search, Settings, User as UserIcon } from 'lucide-react';
 import { UploadAssetDialog } from '../dashboard/UploadAssetDialog';
@@ -22,7 +22,7 @@ import { ThemeToggle } from './ThemeToggle';
 import { NotificationsPopover } from './NotificationsPopover';
 import { BroadcastDialog } from '../dashboard/BroadcastDialog';
 
-export function Header({ user, notifications }: { user: User, notifications: EnrichedNotification[] }) {
+export function Header({ user, notifications, onAssetUpload }: { user: User, notifications: EnrichedNotification[], onAssetUpload: (asset: DataItem) => void }) {
   const router = useRouter();
 
   const handleLogout = () => {
@@ -49,7 +49,7 @@ export function Header({ user, notifications }: { user: User, notifications: Enr
 
         {user.role === 'admin' && <BroadcastDialog />}
         
-        <UploadAssetDialog user={user}>
+        <UploadAssetDialog user={user} onAssetUpload={onAssetUpload}>
           <Button>
               <PlusCircle className="mr-2 h-5 w-5" />
               Add Asset

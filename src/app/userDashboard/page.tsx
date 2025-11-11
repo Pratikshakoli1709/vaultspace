@@ -1,15 +1,15 @@
 
 'use client'
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AppSidebar } from '@/components/common/AppSidebar';
 import { Header } from '@/components/common/Header';
 import { Dashboard } from '@/components/dashboard/Dashboard';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-import { getNotifications, type EnrichedNotification } from '@/lib/data';
-import type { User } from '@/lib/types';
-import { getMockDataItems, getMockActivityLogs } from '@/lib/mock-data';
+import { getNotifications, type EnrichedNotification, type EnrichedDataItem } from '@/lib/data';
+import type { User, DataItem } from '@/lib/types';
+import { getMockDataItems, getMockActivityLogs, getMockUsers } from '@/lib/mock-data';
 
 
 function UserDashboardPage() {
@@ -26,16 +26,29 @@ function UserDashboardPage() {
         createdAt: '2024-07-21T11:30:00Z',
     };
 
-    const userAssets = getMockDataItems().filter(asset => asset.created_by === currentUser.id);
-    const userActivity = getMockActivityLogs().filter(log => log.user_id === currentUser.id);
+    const allUsers = getMockUsers();
+    const [userAssets, setUserAssets] = useState<EnrichedDataItem[]>(
+        getMockDataItems()
+            .filter(asset => asset.created_by === currentUser.id)
+            .map(asset => ({...asset, uploader: allUsers.find(u => u.id === asset.created_by)}))
+    );
+    const [userActivity, setUserActivity] = useState(getMockActivityLogs().filter(log => log.user_id === currentUser.id));
     const notifications: EnrichedNotification[] = getNotifications();
+
+    const handleAssetUpload = (newAsset: DataItem) => {
+        const enrichedAsset: EnrichedDataItem = {
+          ...newAsset,
+          uploader: allUsers.find(u => u.id === newAsset.created_by)
+        }
+        setUserAssets(prevAssets => [enrichedAsset, ...prevAssets]);
+    };
 
     return (
         <SidebarProvider>
             <div className="flex min-h-screen bg-background">
                 <AppSidebar user={currentUser} />
                 <SidebarInset>
-                    <Header user={currentUser} notifications={notifications} />
+                    <Header user={currentUser} notifications={notifications} onAssetUpload={handleAssetUpload} />
                     <main className="flex-1 p-4 sm:p-6 lg:p-8">
                         <Dashboard
                             currentUser={currentUser}

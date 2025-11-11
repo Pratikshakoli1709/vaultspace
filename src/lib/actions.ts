@@ -1,7 +1,9 @@
+
 'use server'
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import type { DataItem, DataItemType } from './types';
 
 const AssetSchema = z.object({
   title: z.string().min(1, 'Title is required.'),
@@ -15,6 +17,7 @@ const AssetSchema = z.object({
 type FormState = {
   success: boolean;
   error?: string;
+  data?: DataItem;
 }
 
 // NOTE: This is a stubbed version for UI preview purposes. It does not actually save data.
@@ -24,6 +27,19 @@ export async function uploadAsset(formData: FormData): Promise<FormState> {
       return { success: false, error: 'User must be logged in to upload an asset.' };
   }
 
+  const newAsset: DataItem = {
+    id: `item-${Date.now()}`,
+    title: formData.get('title') as string,
+    type: formData.get('type') as DataItemType,
+    created_by: created_by,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    link_url: formData.get('link_url') as string,
+    text_content: formData.get('text_content') as string,
+    file_url: formData.get('file') ? URL.createObjectURL(formData.get('file') as File) : undefined,
+  };
+
+
   // Simulate success without database interaction
   await logActivity({
       user_id: created_by,
@@ -32,7 +48,7 @@ export async function uploadAsset(formData: FormData): Promise<FormState> {
   })
 
   revalidatePath('/dashboard');
-  return { success: true };
+  return { success: true, data: newAsset };
 }
 
 
