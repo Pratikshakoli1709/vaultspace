@@ -67,16 +67,13 @@ export function Dashboard({ currentUser, users, assets, activityLogs }: Dashboar
     );
   }
 
-  const userAssets = assets.filter(asset => asset.created_by === currentUser.id);
-  const userActivity = activityLogs.filter(log => log.user_id === currentUser.id);
-
   // Regular user view
   return (
     <div className="space-y-6">
        <h1 className="text-3xl font-bold tracking-tight">Welcome, {currentUser.name.split(' ')[0]}</h1>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <StatCard title="Your Assets" value={userAssets.length} icon={Archive} />
-          <StatCard title="Your Recent Activity" value={userActivity.length} icon={Activity} />
+          <StatCard title="Your Assets" value={assets.length} icon={Archive} />
+          <StatCard title="Your Recent Activity" value={activityLogs.length} icon={Activity} />
         </div>
         <Card>
           <CardHeader>
@@ -84,7 +81,7 @@ export function Dashboard({ currentUser, users, assets, activityLogs }: Dashboar
             <CardDescription>Browse and manage your shared digital assets.</CardDescription>
           </CardHeader>
           <CardContent>
-            <AssetList assets={userAssets} currentUser={currentUser} />
+            <AssetList assets={assets} currentUser={currentUser} />
           </CardContent>
         </Card>
     </div>
