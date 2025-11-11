@@ -1,16 +1,9 @@
-
 "use client"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { HardDrive, Loader2 } from "lucide-react"
@@ -81,7 +74,6 @@ export default function SignupPage() {
             return
         }
         
-        // This will be true if email confirmation is disabled in Supabase project settings
         if (data.session) {
             toast({
                 title: "Account Created!",
@@ -90,15 +82,12 @@ export default function SignupPage() {
             router.push('/dashboard')
             router.refresh()
         } else if (data.user) {
-             // This case handles when email confirmation is required by Supabase.
-             // We cannot bypass this, so we inform the user.
             toast({
                 title: "Account Created!",
                 description: "Please check your email to verify your account before logging in.",
             });
             router.push('/login');
         }
-        // Don't set loading to false here if a redirect is happening
     }
 
     const handleGoogleSignUp = async () => {
@@ -113,59 +102,57 @@ export default function SignupPage() {
 
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
-      <Card className="mx-auto max-w-sm w-full">
-        <CardHeader className="space-y-1 text-center">
-            <div className="flex items-center justify-center gap-2">
+    <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
+      <div className="flex items-center justify-center py-12">
+        <div className="mx-auto grid w-[350px] gap-6">
+          <div className="grid gap-2 text-center">
+             <div className="flex items-center justify-center gap-2 mb-4">
                 <HardDrive className="size-8 text-primary" />
                 <h1 className="text-3xl font-bold">VaultSpace</h1>
             </div>
-          <CardTitle className="text-2xl pt-4">Create an Account</CardTitle>
-          <CardDescription>
-            Enter your information to create an account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSignUp} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" placeholder="John Doe" required value={name} onChange={(e) => setName(e.target.value)} />
+            <h2 className="text-2xl font-bold">Create an account</h2>
+            <p className="text-balance text-muted-foreground">
+              Enter your information to get started.
+            </p>
+          </div>
+          <form onSubmit={handleSignUp} className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="name">Full name</Label>
+              <Input id="name" placeholder="John Doe" required value={name} onChange={(e) => setName(e.target.value)} disabled={isLoading} />
             </div>
-            <div className="space-y-2">
+            <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} />
             </div>
-            <div className="space-y-2">
+            <div className="grid gap-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+              <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading && <Loader2 className="animate-spin mr-2" />}
-              Create Account
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Create an account"}
             </Button>
-            </form>
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Or sign up with
-                </span>
-              </div>
-            </div>
-             <Button variant="outline" className="w-full" onClick={handleGoogleSignUp} disabled={isLoading}>
-                <GoogleIcon className="mr-2 h-5 w-5"/>
-                Sign up with Google
+            <Button variant="outline" className="w-full" onClick={handleGoogleSignUp} disabled={isLoading}>
+                <GoogleIcon className="mr-2 h-5 w-5"/> Sign up with Google
             </Button>
+          </form>
           <div className="mt-4 text-center text-sm">
             Already have an account?{" "}
             <Link href="/login" className="underline">
               Login
             </Link>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+       <div className="hidden bg-muted lg:block">
+        <Image
+          src="https://picsum.photos/seed/vault-signup/1200/1800"
+          alt="Abstract image representing security and data"
+          data-ai-hint="abstract technology"
+          width="1200"
+          height="1800"
+          className="h-full w-full object-cover dark:brightness-[0.3]"
+        />
+      </div>
     </div>
   )
 }

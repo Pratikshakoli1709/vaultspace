@@ -1,16 +1,9 @@
-
 "use client"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { HardDrive, Loader2 } from "lucide-react"
@@ -67,6 +60,7 @@ export default function LoginPage() {
                 title: "Login Failed",
                 description: error.message,
             })
+            setIsLoading(false);
         } else {
             toast({
                 title: "Login Successful",
@@ -75,7 +69,6 @@ export default function LoginPage() {
             router.push('/dashboard')
             router.refresh() // Ensures the layout re-renders with user data
         }
-        setIsLoading(false)
     }
 
     const handleGoogleLogin = async () => {
@@ -86,64 +79,64 @@ export default function LoginPage() {
               redirectTo: `${location.origin}/auth/callback`,
             },
         })
-        // No need to set isLoading to false here, as the page will redirect.
     }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
-      <Card className="mx-auto max-w-sm w-full">
-        <CardHeader className="space-y-1 text-center">
-            <div className="flex items-center justify-center gap-2">
+    <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
+      <div className="flex items-center justify-center py-12">
+        <div className="mx-auto grid w-[350px] gap-6">
+          <div className="grid gap-2 text-center">
+            <div className="flex items-center justify-center gap-2 mb-4">
                 <HardDrive className="size-8 text-primary" />
                 <h1 className="text-3xl font-bold">VaultSpace</h1>
             </div>
-          <CardTitle className="text-2xl pt-4">Welcome Back</CardTitle>
-          <CardDescription>
-            Enter your email below to login to your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
+            <h2 className="text-2xl font-bold">Welcome Back</h2>
+            <p className="text-balance text-muted-foreground">
+              Enter your credentials to access your secure vault.
+            </p>
+          </div>
+          <form onSubmit={handleLogin} className="grid gap-4">
+            <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} />
             </div>
-            <div className="space-y-2">
+            <div className="grid gap-2">
               <div className="flex items-center">
                 <Label htmlFor="password">Password</Label>
-                <Link href="#" className="ml-auto inline-block text-sm underline">
+                <Link
+                  href="#"
+                  className="ml-auto inline-block text-sm underline"
+                >
                   Forgot your password?
                 </Link>
               </div>
-              <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+              <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading && <Loader2 className="animate-spin mr-2" />}
-              Login
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Login"}
             </Button>
-            </form>
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Or continue with
-                </span>
-              </div>
-            </div>
-             <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={isLoading}>
-                <GoogleIcon className="mr-2 h-5 w-5"/>
-                Login with Google
+            <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={isLoading}>
+              <GoogleIcon className="mr-2 h-5 w-5"/> Login with Google
             </Button>
+          </form>
           <div className="mt-4 text-center text-sm">
             Don&apos;t have an account?{" "}
             <Link href="/signup" className="underline">
               Sign up
             </Link>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+      <div className="hidden bg-muted lg:block">
+        <Image
+          src="https://picsum.photos/seed/vault-login/1200/1800"
+          alt="Abstract image representing security and data"
+          data-ai-hint="abstract security"
+          width="1200"
+          height="1800"
+          className="h-full w-full object-cover dark:brightness-[0.3]"
+        />
+      </div>
     </div>
   )
 }

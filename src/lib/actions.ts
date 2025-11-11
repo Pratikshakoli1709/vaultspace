@@ -1,4 +1,3 @@
-
 'use server'
 
 import { createClient } from '@/lib/supabase/server';
@@ -25,8 +24,12 @@ export async function uploadAsset(formData: FormData): Promise<FormState> {
   const created_by = formData.get('created_by') as string;
   const title = formData.get('title') as string;
   let fileUrl: string | null = null;
+  
+  if (!created_by) {
+      return { success: false, error: 'User must be logged in to upload an asset.' };
+  }
 
-  // Handle file upload if asset is an image or document
+  // 1. Handle file upload first, if applicable
   if (type === 'image' || type === 'document') {
     const file = formData.get('file') as File;
     if (!file || file.size === 0) {
@@ -39,7 +42,7 @@ export async function uploadAsset(formData: FormData): Promise<FormState> {
       .upload(filePath, file);
     
     if (uploadError) {
-      console.error('Supabase Upload Error:', uploadError);
+      console.error('Supabase Storage Upload Error:', uploadError);
       return { success: false, error: 'Database error: Could not upload file.' };
     }
 
@@ -47,23 +50,33 @@ export async function uploadAsset(formData: FormData): Promise<FormState> {
     fileUrl = urlData.publicUrl;
   }
   
-  const validatedFields = AssetSchema.safeParse({
+  // 2. Prepare data for validation
+  const dataToValidate = {
     title: title,
     type: type,
     link_url: formData.get('link_url'),
     text_content: formData.get('text_content'),
     file_url: fileUrl,
     created_by: created_by,
-  });
+  };
+
+  // 3. Validate the complete data object
+  const validatedFields = AssetSchema.safeParse(dataToValidate);
   
   if (!validatedFields.success) {
     console.error("Validation Error:", validatedFields.error.flatten());
+    // If validation fails, attempt to delete the orphaned file from storage
+    if (fileUrl) {
+      const filePath = fileUrl.split('/assets/')[1];
+      await supabase.storage.from('assets').remove([filePath]);
+    }
     return {
       success: false,
-      error: 'Invalid data.',
+      error: 'Invalid data submitted. Please check your inputs.',
     };
   }
 
+  // 4. Insert validated data into the database
   const { data, error } = await supabase
     .from('data_items')
     .insert([validatedFields.data])
@@ -72,10 +85,14 @@ export async function uploadAsset(formData: FormData): Promise<FormState> {
 
   if (error) {
     console.error('Supabase Insert Error:', error);
+     if (fileUrl) {
+      const filePath = fileUrl.split('/assets/')[1];
+      await supabase.storage.from('assets').remove([filePath]);
+    }
     return { success: false, error: 'Database error: Could not save asset metadata.' };
   }
 
-  // Log activity
+  // 5. Log activity
   await logActivity({
       user_id: validatedFields.data.created_by,
       action: 'UPLOADED',
@@ -90,12 +107,25 @@ export async function uploadAsset(formData: FormData): Promise<FormState> {
 
 export async function deleteAsset(assetId: string) {
     const supabase = createClient();
+    const { data: asset } = await supabase.from('data_items').select('file_url').eq('id', assetId).single();
+
     const { error } = await supabase.from('data_items').delete().eq('id', assetId);
 
     if (error) {
         console.error('Supabase delete error:', error);
         return { success: false, error: 'Database error: Could not delete asset.' };
     }
+
+    // If asset was a file, delete it from storage as well
+    if (asset?.file_url) {
+        try {
+            const filePath = asset.file_url.split('/assets/')[1];
+            await supabase.storage.from('assets').remove([filePath]);
+        } catch (storageError) {
+            console.error("Could not delete from storage, but DB record was removed:", storageError);
+        }
+    }
+    
     revalidatePath('/dashboard');
     return { success: true };
 }
