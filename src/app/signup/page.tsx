@@ -6,10 +6,11 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { HardDrive, Loader2 } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useToast } from "@/hooks/use-toast"
+import { Logo } from "@/components/common/Logo"
 
 function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
@@ -77,10 +78,9 @@ export default function SignupPage() {
         if (data.session) {
             toast({
                 title: "Account Created!",
-                description: "Redirecting you to the dashboard...",
+                description: "Redirecting you to the login page...",
             })
-            router.push('/dashboard')
-            router.refresh()
+            router.push('/login')
         } else if (data.user) {
             toast({
                 title: "Account Created!",
@@ -107,7 +107,7 @@ export default function SignupPage() {
         <div className="mx-auto grid w-[350px] gap-6">
           <div className="grid gap-2 text-center">
              <div className="flex items-center justify-center gap-2 mb-4">
-                <HardDrive className="size-8 text-primary" />
+                <Logo />
                 <h1 className="text-3xl font-bold">VaultSpace</h1>
             </div>
             <h2 className="text-2xl font-bold">Create an account</h2>

@@ -6,10 +6,11 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { HardDrive, Loader2 } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useToast } from "@/hooks/use-toast"
+import { Logo } from "@/components/common/Logo"
 
 function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
@@ -52,7 +53,7 @@ export default function LoginPage() {
         event.preventDefault()
         setIsLoading(true)
         
-        const { error } = await supabase.auth.signInWithPassword({ email, password })
+        const { data: { session }, error } = await supabase.auth.signInWithPassword({ email, password })
 
         if (error) {
             toast({
@@ -61,13 +62,24 @@ export default function LoginPage() {
                 description: error.message,
             })
             setIsLoading(false);
-        } else {
+        } else if (session) {
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', session.user.id)
+                .single();
+
             toast({
                 title: "Login Successful",
                 description: "Redirecting you to the dashboard...",
             })
-            router.push('/dashboard')
-            router.refresh() // Ensures the layout re-renders with user data
+
+            if (profile?.role === 'admin') {
+                router.push('/adminDashboard')
+            } else {
+                router.push('/userDashboard')
+            }
+            router.refresh()
         }
     }
 
@@ -87,7 +99,7 @@ export default function LoginPage() {
         <div className="mx-auto grid w-[350px] gap-6">
           <div className="grid gap-2 text-center">
             <div className="flex items-center justify-center gap-2 mb-4">
-                <HardDrive className="size-8 text-primary" />
+                <Logo />
                 <h1 className="text-3xl font-bold">VaultSpace</h1>
             </div>
             <h2 className="text-2xl font-bold">Welcome Back</h2>

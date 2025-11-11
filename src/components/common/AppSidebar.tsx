@@ -10,14 +10,26 @@ import {
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
-import { Home, Settings, Shield, HardDrive, LogOut } from "lucide-react"
+import { Home, Settings, Shield, LogOut } from "lucide-react"
 import { User } from "@/lib/types"
+import { Logo } from "./Logo"
+import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
 
 export function AppSidebar({ user }: { user: User }) {
+    const supabase = createClient();
+    const router = useRouter();
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        router.push('/login');
+        router.refresh();
+    }
+
     return (
         <Sidebar>
             <SidebarHeader className="h-16 flex items-center gap-2 px-4">
-                <HardDrive className="size-8 text-sidebar-primary" />
+                <Logo />
                 <div className="flex flex-col">
                     <h2 className="text-lg font-semibold text-sidebar-foreground tracking-tighter">
                         VaultSpace
@@ -52,7 +64,7 @@ export function AppSidebar({ user }: { user: User }) {
                  <Separator className="my-2 bg-sidebar-border" />
                  <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton>
+                        <SidebarMenuButton onClick={handleLogout}>
                              <LogOut />
                             <span>Log out</span>
                         </SidebarMenuButton>
