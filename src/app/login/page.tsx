@@ -143,12 +143,12 @@ export default function LoginPage() {
       </div>
       <div className="hidden bg-muted lg:block">
         <Image
-          src="https://picsum.photos/seed/vault-login/1200/1800"
-          alt="Abstract image representing security and data"
-          data-ai-hint="abstract security"
+          src="https://images.unsplash.com/photo-1556761175-b413da4baf72?q=80&w=1974&auto=format&fit=crop"
+          alt="Two colleagues collaborating in a modern office"
+          data-ai-hint="corporate collaboration"
           width="1200"
           height="1800"
-          className="h-full w-full object-cover dark:brightness-[0.3]"
+          className="h-full w-full object-cover dark:brightness-[0.4]"
         />
       </div>
     </div>

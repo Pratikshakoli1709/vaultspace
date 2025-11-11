@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Logo } from '@/components/common/Logo';
-import { ThemeToggle } from '@/components/common/ThemeToggle';
+import { HomePageHeader } from '@/components/common/HomePageHeader';
 import {
   ShieldCheck,
   Users,
@@ -85,26 +84,7 @@ function FeatureCard({ icon: Icon, name, description }: { icon: LucideIcon; name
 export default function Home() {
   return (
     <div className="flex min-h-screen w-full flex-col bg-background text-foreground">
-      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur-sm">
-        <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
-          <Link href="/" className="flex items-center gap-3">
-            <Logo />
-            <div className="flex flex-col">
-              <span className="text-lg font-semibold">VaultSpace</span>
-              <span className="text-xs text-muted-foreground">Secure Data Management</span>
-            </div>
-          </Link>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <Button variant="ghost" asChild>
-              <Link href="/login">Sign In</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/signup">Get Started</Link>
-            </Button>
-          </div>
-        </div>
-      </header>
+      <HomePageHeader />
 
       <main className="flex-1">
         <section className="relative w-full overflow-hidden py-20 sm:py-32 lg:py-40">
@@ -122,10 +102,7 @@ export default function Home() {
                 VaultSpace provides a single, secure platform to store documents, environment keys, URLs, and critical company data with role-based access and complete audit trails.
               </p>
               <div className="flex flex-col gap-4 sm:flex-row">
-                <Button size="lg" asChild className="bg-blue-500 hover:bg-blue-600 text-white shadow-lg">
-                  <Link href="/login">Login</Link>
-                </Button>
-                <Button size="lg" variant="outline" asChild>
+                <Button size="lg" asChild>
                   <Link href="/signup">Get Started</Link>
                 </Button>
               </div>
