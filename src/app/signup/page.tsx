@@ -1,7 +1,8 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import type { SupabaseClient } from "@supabase/supabase-js"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import {
@@ -54,10 +55,16 @@ export default function SignupPage() {
     const [name, setName] = useState("")
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
-    const supabase = createClient()
+    const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
+
+    useEffect(() => {
+        setSupabase(createClient());
+    }, []);
+
 
     const handleSignUp = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault()
+        if (!supabase) return;
         setIsLoading(true)
 
         const { data, error } = await supabase.auth.signUp({
@@ -100,6 +107,7 @@ export default function SignupPage() {
     }
 
     const handleGoogleSignUp = async () => {
+        if (!supabase) return;
         await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
@@ -136,7 +144,7 @@ export default function SignupPage() {
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full" disabled={isLoading || !supabase}>
               {isLoading && <Loader2 className="animate-spin mr-2" />}
               Create Account
             </Button>
@@ -151,7 +159,7 @@ export default function SignupPage() {
                 </span>
               </div>
             </div>
-             <Button variant="outline" className="w-full" onClick={handleGoogleSignUp} disabled={isLoading}>
+             <Button variant="outline" className="w-full" onClick={handleGoogleSignUp} disabled={isLoading || !supabase}>
                 <GoogleIcon className="mr-2 h-5 w-5"/>
                 Sign up with Google
             </Button>

@@ -1,7 +1,8 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import type { SupabaseClient } from "@supabase/supabase-js"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import {
@@ -53,10 +54,16 @@ export default function LoginPage() {
     const [isLoading, setIsLoading] = useState(false)
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
-    const supabase = createClient()
+    const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
+
+    useEffect(() => {
+        setSupabase(createClient());
+    }, []);
 
     const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault()
+        if (!supabase) return;
+
         setIsLoading(true)
         
         const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -79,6 +86,7 @@ export default function LoginPage() {
     }
 
     const handleGoogleLogin = async () => {
+        if (!supabase) return;
         await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
@@ -115,7 +123,7 @@ export default function LoginPage() {
               </div>
               <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full" disabled={isLoading || !supabase}>
               {isLoading && <Loader2 className="animate-spin mr-2" />}
               Login
             </Button>
@@ -130,7 +138,7 @@ export default function LoginPage() {
                 </span>
               </div>
             </div>
-             <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={isLoading}>
+             <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={isLoading || !supabase}>
                 <GoogleIcon className="mr-2 h-5 w-5"/>
                 Login with Google
             </Button>
