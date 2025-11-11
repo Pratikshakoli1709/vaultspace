@@ -26,6 +26,8 @@ export function AppSidebar({ user }: { user: User }) {
     }
     
     const dashboardPath = user.role === 'admin' ? '/adminDashboard' : '/userDashboard';
+    const settingsPath = `/settings?name=${encodeURIComponent(user.name)}`;
+
 
     return (
         <Sidebar>
@@ -40,12 +42,10 @@ export function AppSidebar({ user }: { user: User }) {
             <SidebarContent className="p-2">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <Link href={dashboardPath} passHref legacyBehavior>
-                          <SidebarMenuButton asChild tooltip="Dashboard" isActive={pathname.includes('Dashboard')}>
-                              <a>
+                        <Link href={dashboardPath}>
+                          <SidebarMenuButton tooltip="Dashboard" isActive={pathname.includes('Dashboard')}>
                                 <Home />
                                 <span>Dashboard</span>
-                              </a>
                           </SidebarMenuButton>
                         </Link>
                     </SidebarMenuItem>
@@ -58,12 +58,10 @@ export function AppSidebar({ user }: { user: User }) {
                         </SidebarMenuItem>
                     )}
                     <SidebarMenuItem>
-                       <Link href="/settings" passHref legacyBehavior>
-                            <SidebarMenuButton asChild tooltip="Settings" isActive={pathname === '/settings'}>
-                                <a>
-                                    <Settings />
-                                    <span>Settings</span>
-                                </a>
+                       <Link href={settingsPath}>
+                            <SidebarMenuButton tooltip="Settings" isActive={pathname === '/settings'}>
+                                <Settings />
+                                <span>Settings</span>
                             </SidebarMenuButton>
                         </Link>
                     </SidebarMenuItem>
