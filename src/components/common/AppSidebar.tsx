@@ -1,5 +1,7 @@
 
 "use client"
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
     Sidebar,
     SidebarContent,
@@ -9,7 +11,6 @@ import {
     SidebarMenuItem,
     SidebarMenuButton,
 } from "@/components/ui/sidebar"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { Home, Settings, Shield, LogOut } from "lucide-react"
 import { User } from "@/lib/types"
@@ -18,10 +19,13 @@ import { useRouter } from "next/navigation"
 
 export function AppSidebar({ user }: { user: User }) {
     const router = useRouter();
+    const pathname = usePathname();
 
     const handleLogout = () => {
         router.push('/');
     }
+    
+    const dashboardPath = user.role === 'admin' ? '/adminDashboard' : '/userDashboard';
 
     return (
         <Sidebar>
@@ -36,10 +40,14 @@ export function AppSidebar({ user }: { user: User }) {
             <SidebarContent className="p-2">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton tooltip="Dashboard" isActive>
-                            <Home />
-                            <span>Dashboard</span>
-                        </SidebarMenuButton>
+                        <Link href={dashboardPath} passHref legacyBehavior>
+                          <SidebarMenuButton asChild tooltip="Dashboard" isActive={pathname.includes('Dashboard')}>
+                              <a>
+                                <Home />
+                                <span>Dashboard</span>
+                              </a>
+                          </SidebarMenuButton>
+                        </Link>
                     </SidebarMenuItem>
                     {user.role === 'admin' && (
                         <SidebarMenuItem>
@@ -50,10 +58,14 @@ export function AppSidebar({ user }: { user: User }) {
                         </SidebarMenuItem>
                     )}
                     <SidebarMenuItem>
-                        <SidebarMenuButton tooltip="Settings">
-                            <Settings />
-                            <span>Settings</span>
-                        </SidebarMenuButton>
+                       <Link href="/settings" passHref legacyBehavior>
+                            <SidebarMenuButton asChild tooltip="Settings" isActive={pathname === '/settings'}>
+                                <a>
+                                    <Settings />
+                                    <span>Settings</span>
+                                </a>
+                            </SidebarMenuButton>
+                        </Link>
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarContent>

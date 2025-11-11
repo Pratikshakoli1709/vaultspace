@@ -12,7 +12,7 @@ import type { User, DataItem } from '@/lib/types';
 import { getMockDataItems, getMockActivityLogs, getMockUsers } from '@/lib/mock-data';
 
 
-function UserDashboardPage() {
+function UserDashboardPageContent() {
     const searchParams = useSearchParams();
     const name = searchParams.get('name');
 
@@ -31,7 +31,11 @@ function UserDashboardPage() {
             .filter(asset => asset.created_by === currentUser.id)
             .map(asset => ({...asset, uploader: allUsers.find(u => u.id === asset.created_by)}))
     );
-    const [userActivity, setUserActivity] = React.useState(getMockActivityLogs().filter(log => log.user_id === currentUser.id));
+    const [userActivity, setUserActivity] = React.useState(
+        getMockActivityLogs()
+            .filter(log => log.user_id === currentUser.id)
+            .map(log => ({...log, user: allUsers.find(u => u.id === log.user_id)}))
+    );
     const notifications: EnrichedNotification[] = getNotifications();
 
     const handleAssetUpload = (newAsset: DataItem) => {
@@ -62,10 +66,10 @@ function UserDashboardPage() {
     );
 }
 
-const UserDashboardPageWrapper = () => (
-    <React.Suspense fallback={<div>Loading...</div>}>
-        <UserDashboardPage />
-    </React.Suspense>
-);
-
-export default UserDashboardPageWrapper;
+export default function UserDashboardPage() {
+    return (
+        <React.Suspense fallback={<div>Loading...</div>}>
+            <UserDashboardPageContent />
+        </React.Suspense>
+    );
+}

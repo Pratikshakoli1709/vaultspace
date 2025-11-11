@@ -12,7 +12,7 @@ import { getNotifications } from '@/lib/data';
 import type { User, DataItem } from '@/lib/types';
 import { getMockUsers, getMockDataItems, getMockActivityLogs } from '@/lib/mock-data';
 
-function AdminDashboardPage() {
+function AdminDashboardPageContent() {
   const searchParams = useSearchParams();
   const name = searchParams.get('name');
 
@@ -26,8 +26,13 @@ function AdminDashboardPage() {
   });
   
   const allUsers = getMockUsers();
-  const [assets, setAssets] = React.useState<EnrichedDataItem[]>(getMockDataItems());
-  const [activityLogs, setActivityLogs] = React.useState(getMockActivityLogs());
+  const [assets, setAssets] = React.useState<EnrichedDataItem[]>(
+    getMockDataItems().map(asset => ({
+      ...asset,
+      uploader: allUsers.find(u => u.id === asset.created_by)
+    }))
+  );
+  const [activityLogs, setActivityLogs] = React.useState(getMockActivityLogs().map(log => ({...log, user: allUsers.find(u => u.id === log.user_id)})));
   const notifications: EnrichedNotification[] = getNotifications();
 
   const handleAssetUpload = (newAsset: DataItem) => {
@@ -59,13 +64,11 @@ function AdminDashboardPage() {
     );
 }
 
-// Since the page uses `useSearchParams`, it needs to be wrapped in a Suspense boundary
-// if it were a child of a Server Component. Since this is the top-level page component,
-// this wrapper ensures client-side hooks work as expected.
-const AdminDashboardPageWrapper = () => (
-  <React.Suspense fallback={<div>Loading...</div>}>
-    <AdminDashboardPage />
-  </React.Suspense>
-);
 
-export default AdminDashboardPageWrapper;
+export default function AdminDashboardPage() {
+  return (
+    <React.Suspense fallback={<div>Loading...</div>}>
+      <AdminDashboardPageContent />
+    </React.Suspense>
+  );
+}
