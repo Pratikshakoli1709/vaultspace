@@ -4,10 +4,10 @@ import { AppSidebar } from '@/components/common/AppSidebar';
 import { Header } from '@/components/common/Header';
 import { Dashboard } from '@/components/dashboard/Dashboard';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-import { getRealUsers, getRealDataItems, getRealActivityLogs, getNotifications, type EnrichedDataItem, type EnrichedActivityLog, type EnrichedNotification } from '@/lib/data';
+import { getRealUsers, getRealDataItems, getRealActivityLogs, getNotifications, type EnrichedNotification } from '@/lib/data';
 import type { User } from '@/lib/types';
 
-export default async function DashboardPage() {
+export default async function AdminDashboardPage() {
   const supabase = createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -21,32 +21,21 @@ export default async function DashboardPage() {
     .select('*')
     .eq('id', user.id)
     .single();
-  
-  if (!profile) {
-    // This case can happen if a user is authenticated but their profile is missing.
-    // We could sign them out or redirect to an error page. For now, we redirect to login.
-    await supabase.auth.signOut();
-    return redirect('/login?error=Profile not found. Please log in again.');
+
+  if (!profile || profile.role !== 'admin') {
+    // If user is not an admin, redirect to their own dashboard
+    return redirect('/userDashboard');
   }
 
   const currentUser: User = {
     id: user.id,
-    name: profile.full_name || 'User',
+    name: profile.full_name || 'Admin',
     email: user.email || 'No email',
     avatarUrl: profile.avatar_url || `https://i.pravatar.cc/150?u=${user.id}`,
-    role: profile.role || 'user',
+    role: 'admin',
     createdAt: user.created_at,
   };
-  
-  // Based on the user role, redirect to the appropriate dashboard
-  if (currentUser.role === 'admin') {
-    redirect('/adminDashboard');
-  } else {
-    redirect('/userDashboard');
-  }
 
-  // The code below is now effectively unreachable but kept for safety.
-  // The actual content will be in /adminDashboard and /userDashboard pages.
   const allUsers = await getRealUsers();
   const assets = await getRealDataItems();
   const activityLogs = await getRealActivityLogs();

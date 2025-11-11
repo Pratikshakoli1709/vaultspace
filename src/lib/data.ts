@@ -111,10 +111,13 @@ export const getRealUsers = async (): Promise<User[]> => {
     console.error('Error fetching users:', error);
     return []; 
   }
+  // The 'profiles' table does not contain the user's email.
+  // We return a placeholder or empty string for the email field.
+  // The user's actual email is fetched from `supabase.auth.getUser()` when needed.
   return data.map(profile => ({
     id: profile.id,
     name: profile.full_name || 'No Name',
-    email: '', // The email is not in the profiles table, so we return an empty string.
+    email: '', 
     avatarUrl: profile.avatar_url || `https://i.pravatar.cc/150?u=${profile.id}`,
     role: profile.role || 'user',
     createdAt: profile.created_at,

@@ -55,13 +55,14 @@ export default function LoginPage() {
         
         const { data: { session }, error } = await supabase.auth.signInWithPassword({ email, password })
 
+        setIsLoading(false);
+
         if (error) {
             toast({
                 variant: "destructive",
                 title: "Login Failed",
                 description: error.message,
             })
-            setIsLoading(false);
         } else if (session) {
             const { data: profile } = await supabase
                 .from('profiles')
@@ -74,12 +75,13 @@ export default function LoginPage() {
                 description: "Redirecting you to the dashboard...",
             })
 
+            // Redirect based on role, default to /dashboard if role is not found
             if (profile?.role === 'admin') {
-                router.push('/adminDashboard')
+                router.push('/adminDashboard');
             } else {
-                router.push('/userDashboard')
+                router.push('/userDashboard');
             }
-            router.refresh()
+            router.refresh(); // Refresh the page to reflect the new session
         }
     }
 

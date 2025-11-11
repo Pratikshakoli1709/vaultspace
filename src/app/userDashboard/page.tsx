@@ -4,10 +4,10 @@ import { AppSidebar } from '@/components/common/AppSidebar';
 import { Header } from '@/components/common/Header';
 import { Dashboard } from '@/components/dashboard/Dashboard';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-import { getRealUsers, getRealDataItems, getRealActivityLogs, getNotifications, type EnrichedDataItem, type EnrichedActivityLog, type EnrichedNotification } from '@/lib/data';
+import { getRealDataItems, getRealActivityLogs, getNotifications, type EnrichedNotification } from '@/lib/data';
 import type { User } from '@/lib/types';
 
-export default async function DashboardPage() {
+export default async function UserDashboardPage() {
   const supabase = createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -21,10 +21,8 @@ export default async function DashboardPage() {
     .select('*')
     .eq('id', user.id)
     .single();
-  
+
   if (!profile) {
-    // This case can happen if a user is authenticated but their profile is missing.
-    // We could sign them out or redirect to an error page. For now, we redirect to login.
     await supabase.auth.signOut();
     return redirect('/login?error=Profile not found. Please log in again.');
   }
@@ -37,19 +35,14 @@ export default async function DashboardPage() {
     role: profile.role || 'user',
     createdAt: user.created_at,
   };
-  
-  // Based on the user role, redirect to the appropriate dashboard
-  if (currentUser.role === 'admin') {
-    redirect('/adminDashboard');
-  } else {
-    redirect('/userDashboard');
-  }
 
-  // The code below is now effectively unreachable but kept for safety.
-  // The actual content will be in /adminDashboard and /userDashboard pages.
-  const allUsers = await getRealUsers();
-  const assets = await getRealDataItems();
-  const activityLogs = await getRealActivityLogs();
+  // For a regular user, we only need their assets and activities
+  const allAssets = await getRealDataItems();
+  const userAssets = allAssets.filter(asset => asset.created_by === currentUser.id);
+
+  const allActivityLogs = await getRealActivityLogs();
+  const userActivity = allActivityLogs.filter(log => log.user_id === currentUser.id);
+  
   const notifications: EnrichedNotification[] = getNotifications();
 
   return (
@@ -61,9 +54,9 @@ export default async function DashboardPage() {
           <main className="flex-1 p-4 sm:p-6 lg:p-8">
             <Dashboard
               currentUser={currentUser}
-              users={allUsers}
-              assets={assets}
-              activityLogs={activityLogs}
+              users={[]} // Regular user doesn't need the full user list
+              assets={userAssets}
+              activityLogs={userActivity}
             />
           </main>
         </SidebarInset>
