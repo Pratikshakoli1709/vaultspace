@@ -1,7 +1,7 @@
 
 'use client'
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AppSidebar } from '@/components/common/AppSidebar';
 import { Header } from '@/components/common/Header';
@@ -16,23 +16,22 @@ function UserDashboardPage() {
     const searchParams = useSearchParams();
     const name = searchParams.get('name');
 
-    // MOCK USER FOR PREVIEW
-    const currentUser: User = {
+    const [currentUser, setCurrentUser] = React.useState<User>({
         id: 'user-2',
         name: name || 'Maria Garcia',
         email: name ? `${name.split(' ').join('.').toLowerCase()}@example.com` : 'maria.g@example.com',
         avatarUrl: `https://i.pravatar.cc/150?u=${encodeURIComponent(name || 'user-2')}`,
         role: 'user',
         createdAt: '2024-07-21T11:30:00Z',
-    };
+    });
 
     const allUsers = getMockUsers();
-    const [userAssets, setUserAssets] = useState<EnrichedDataItem[]>(
+    const [userAssets, setUserAssets] = React.useState<EnrichedDataItem[]>(
         getMockDataItems()
             .filter(asset => asset.created_by === currentUser.id)
             .map(asset => ({...asset, uploader: allUsers.find(u => u.id === asset.created_by)}))
     );
-    const [userActivity, setUserActivity] = useState(getMockActivityLogs().filter(log => log.user_id === currentUser.id));
+    const [userActivity, setUserActivity] = React.useState(getMockActivityLogs().filter(log => log.user_id === currentUser.id));
     const notifications: EnrichedNotification[] = getNotifications();
 
     const handleAssetUpload = (newAsset: DataItem) => {
@@ -48,7 +47,7 @@ function UserDashboardPage() {
             <div className="flex min-h-screen bg-background">
                 <AppSidebar user={currentUser} />
                 <SidebarInset>
-                    <Header user={currentUser} notifications={notifications} onAssetUpload={handleAssetUpload} />
+                    <Header user={currentUser} notifications={notifications} onAssetUpload={handleAssetUpload} onUserUpdate={setCurrentUser} />
                     <main className="flex-1 p-4 sm:p-6 lg:p-8">
                         <Dashboard
                             currentUser={currentUser}

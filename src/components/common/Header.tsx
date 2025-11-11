@@ -1,6 +1,7 @@
 
 'use client';
 
+import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -21,8 +22,16 @@ import { UploadAssetDialog } from '../dashboard/UploadAssetDialog';
 import { ThemeToggle } from './ThemeToggle';
 import { NotificationsPopover } from './NotificationsPopover';
 import { BroadcastDialog } from '../dashboard/BroadcastDialog';
+import { EditProfileDialog } from '../dashboard/EditProfileDialog';
 
-export function Header({ user, notifications, onAssetUpload }: { user: User, notifications: EnrichedNotification[], onAssetUpload: (asset: DataItem) => void }) {
+interface HeaderProps {
+  user: User;
+  notifications: EnrichedNotification[];
+  onAssetUpload: (asset: DataItem) => void;
+  onUserUpdate: (user: User) => void;
+}
+
+export function Header({ user, notifications, onAssetUpload, onUserUpdate }: HeaderProps) {
   const router = useRouter();
 
   const handleLogout = () => {
@@ -73,10 +82,12 @@ export function Header({ user, notifications, onAssetUpload }: { user: User, not
                 </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <UserIcon className="mr-2 h-4 w-4" />
-              <span>Profile</span>
-            </DropdownMenuItem>
+            <EditProfileDialog user={user} onUserUpdate={onUserUpdate}>
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                <UserIcon className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </DropdownMenuItem>
+            </EditProfileDialog>
             <DropdownMenuItem>
               <Settings className="mr-2 h-4 w-4" />
               <span>Settings</span>

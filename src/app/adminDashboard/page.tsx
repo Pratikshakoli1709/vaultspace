@@ -1,7 +1,7 @@
 
 'use client'
 
-import React, { useState } from 'react';
+import React, 'react';
 import { useSearchParams } from 'next/navigation';
 import { AppSidebar } from '@/components/common/AppSidebar';
 import { Header } from '@/components/common/Header';
@@ -16,19 +16,18 @@ function AdminDashboardPage() {
   const searchParams = useSearchParams();
   const name = searchParams.get('name');
 
-  // MOCK ADMIN USER FOR PREVIEW
-  const currentUser: User = {
+  const [currentUser, setCurrentUser] = React.useState<User>({
       id: 'user-1',
       name: name || 'Alex Johnson',
       email: name ? `${name.split(' ').join('.').toLowerCase()}@example.com` : 'alex.j@example.com',
       avatarUrl: `https://i.pravatar.cc/150?u=${encodeURIComponent(name || 'user-1')}`,
       role: 'admin',
       createdAt: '2024-07-20T10:00:00Z',
-  };
+  });
   
   const allUsers = getMockUsers();
-  const [assets, setAssets] = useState<EnrichedDataItem[]>(getMockDataItems());
-  const [activityLogs, setActivityLogs] = useState(getMockActivityLogs());
+  const [assets, setAssets] = React.useState<EnrichedDataItem[]>(getMockDataItems());
+  const [activityLogs, setActivityLogs] = React.useState(getMockActivityLogs());
   const notifications: EnrichedNotification[] = getNotifications();
 
   const handleAssetUpload = (newAsset: DataItem) => {
@@ -45,7 +44,7 @@ function AdminDashboardPage() {
             <div className="flex min-h-screen bg-background">
                 <AppSidebar user={currentUser} />
                 <SidebarInset>
-                    <Header user={currentUser} notifications={notifications} onAssetUpload={handleAssetUpload} />
+                    <Header user={currentUser} notifications={notifications} onAssetUpload={handleAssetUpload} onUserUpdate={setCurrentUser} />
                     <main className="flex-1 p-4 sm:p-6 lg:p-8">
                         <Dashboard
                             currentUser={currentUser}
