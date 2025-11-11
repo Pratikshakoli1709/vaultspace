@@ -1,5 +1,7 @@
+
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,6 +23,12 @@ import { NotificationsPopover } from './NotificationsPopover';
 import { BroadcastDialog } from '../dashboard/BroadcastDialog';
 
 export function Header({ user, notifications }: { user: User, notifications: EnrichedNotification[] }) {
+  const router = useRouter();
+
+  const handleLogout = () => {
+    router.push('/');
+  }
+
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-card px-4 md:px-6">
       <div className="flex items-center gap-2">
@@ -74,7 +82,7 @@ export function Header({ user, notifications }: { user: User, notifications: Enr
               <span>Settings</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>
             </DropdownMenuItem>

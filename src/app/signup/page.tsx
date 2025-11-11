@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react"
@@ -23,19 +24,22 @@ export default function SignupPage() {
         event.preventDefault()
         setIsLoading(true)
 
-        const welcomeMessage = name === 'Pratiksha Koli' ? `Welcome, Pratiksha Koli!` : "Welcome! Your account is ready.";
+        const isSpecialUser = name === 'Pratiksha Koli';
+        const welcomeMessage = isSpecialUser ? `Welcome, Pratiksha Koli!` : `Welcome, ${name || 'User'}!`;
 
         toast({
             title: "Account Created!",
             description: welcomeMessage,
         });
 
+        const nameParam = encodeURIComponent(name);
+
         // Use a short timeout to allow the user to see the toast before redirecting
         setTimeout(() => {
-             if (name === 'Pratiksha Koli') {
-                router.push('/adminDashboard');
+             if (isSpecialUser) {
+                router.push(`/adminDashboard?name=${nameParam}`);
             } else {
-                router.push('/userDashboard');
+                router.push(`/userDashboard?name=${nameParam}`);
             }
         }, 1000);
     }

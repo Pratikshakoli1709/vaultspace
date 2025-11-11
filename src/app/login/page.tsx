@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react"
@@ -22,19 +23,22 @@ export default function LoginPage() {
         event.preventDefault()
         setIsLoading(true)
         
-        const welcomeMessage = email === 'Pratiksha Koli' ? `Welcome, Pratiksha Koli!` : "Welcome to your dashboard!";
+        const isSpecialUser = email === 'Pratiksha Koli';
+        const welcomeMessage = isSpecialUser ? `Welcome, Pratiksha Koli!` : `Welcome, ${email || 'User'}!`;
         
         toast({
             title: "Login Successful",
             description: welcomeMessage,
         })
+        
+        const nameParam = encodeURIComponent(email);
 
         // Use a short timeout to allow the user to see the toast before redirecting
         setTimeout(() => {
-            if (email === 'Pratiksha Koli') {
-                router.push('/adminDashboard');
+            if (isSpecialUser) {
+                router.push(`/adminDashboard?name=${nameParam}`);
             } else {
-                router.push('/userDashboard');
+                router.push(`/userDashboard?name=${nameParam}`);
             }
         }, 1000);
     }

@@ -1,3 +1,4 @@
+
 "use client"
 import {
     Sidebar,
@@ -13,17 +14,14 @@ import { Separator } from "@/components/ui/separator"
 import { Home, Settings, Shield, LogOut } from "lucide-react"
 import { User } from "@/lib/types"
 import { Logo } from "./Logo"
-import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 
 export function AppSidebar({ user }: { user: User }) {
-    const supabase = createClient();
     const router = useRouter();
 
     const handleLogout = async () => {
-        await supabase.auth.signOut();
-        router.push('/login');
-        router.refresh();
+        // Since we are not using a real auth provider, just redirect to home.
+        router.push('/');
     }
 
     return (
