@@ -1,7 +1,8 @@
-import { FileText, Link, KeyRound, Image, type LucideProps, type Icon as LucideIcon } from 'lucide-react';
+import { FileText, Link, KeyRound, Image, type LucideProps } from 'lucide-react';
+import type { ComponentType } from 'react';
 import type { DataItemType } from '@/lib/types';
 
-export const AssetTypeIcons: Record<DataItemType, LucideIcon> = {
+export const AssetTypeIcons: Record<DataItemType, ComponentType<LucideProps>> = {
   document: FileText,
   link: Link,
   key: KeyRound,

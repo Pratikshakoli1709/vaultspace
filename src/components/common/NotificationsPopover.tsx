@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Bell, Megaphone } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
-import { EnrichedNotification } from "@/lib/data"
+import type { EnrichedNotification } from "@/lib/types"
 
 export function NotificationsPopover({ notifications }: { notifications: EnrichedNotification[] }) {
   const unreadCount = notifications.filter(n => !n.is_read).length;

@@ -1,7 +1,6 @@
-
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -11,6 +10,7 @@ import { Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
 import { Logo } from "@/components/common/Logo"
+import supabase from "@/lib/supabaseClient"
 
 export default function SignupPage() {
     const router = useRouter()
@@ -19,29 +19,151 @@ export default function SignupPage() {
     const [name, setName] = useState("")
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
+    const normalizedAllowlist = useMemo(
+      () => ['atharv@gmail.com', 'ankita@gmail.com'],
+      [],
+    );
 
     const handleSignUp = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault()
         setIsLoading(true)
 
-        const isSpecialUser = name === 'Pratiksha Koli';
-        const welcomeMessage = isSpecialUser ? `Welcome, Pratiksha Koli!` : `Welcome, ${name || 'User'}!`;
+        const normalizedEmail = email.trim().toLowerCase();
+        const emailPattern =
+          /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
-        toast({
-            title: "Account Created!",
-            description: welcomeMessage,
-        });
+        if (!emailPattern.test(normalizedEmail)) {
+            toast({
+                title: "Signup Failed",
+                description: "Enter a valid email address.",
+                variant: "destructive",
+            });
+            setIsLoading(false);
+            return;
+        }
 
-        const nameParam = encodeURIComponent(name);
+        // Validate password length
+        if (password.length < 6) {
+            toast({
+                title: "Signup Failed",
+                description: "Password should be at least 6 characters.",
+                variant: "destructive",
+            });
+            setIsLoading(false);
+            return;
+        }
 
-        // Use a short timeout to allow the user to see the toast before redirecting
-        setTimeout(() => {
-             if (isSpecialUser) {
-                router.push(`/adminDashboard?name=${nameParam}`);
-            } else {
-                router.push(`/userDashboard?name=${nameParam}`);
+        try {
+            const response = await fetch('/api/auth/register', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                name,
+                email: normalizedEmail,
+                password,
+              }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+              // If user already exists, try to log them in instead
+              if (result.error?.includes('already been registered') || result.error?.includes('already exists')) {
+                toast({
+                  title: "Account Already Exists",
+                  description: "This email is already registered. Attempting to log you in...",
+                });
+                
+                // Try to sign in with the provided credentials
+                const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+                  email: normalizedEmail,
+                  password,
+                });
+
+                if (signInError) {
+                  throw new Error('This email is already registered. Please log in instead, or use a different email.');
+                }
+
+                // Fetch profile and redirect
+                const { data: profileData } = await supabase
+                  .from('profiles')
+                  .select('full_name, role')
+                  .eq('id', signInData.user?.id ?? '')
+                  .maybeSingle();
+
+                const userName =
+                  profileData?.full_name ||
+                  signInData.user?.user_metadata?.full_name ||
+                  signInData.user?.email ||
+                  'User';
+                const userRole = profileData?.role === 'admin' ? 'admin' : 'user';
+
+                toast({
+                  title: "Login Successful",
+                  description: `Welcome back, ${userName}!`,
+                });
+
+                const redirectTarget = userRole === 'admin' ? '/adminDashboard' : '/userDashboard';
+
+                setTimeout(() => {
+                  router.push(redirectTarget);
+                }, 1000);
+                return;
+              }
+              
+              throw new Error(result.error ?? 'Unable to create your account at the moment.');
             }
-        }, 1000);
+
+            const { data, error } = await supabase.auth.signInWithPassword({
+              email: normalizedEmail,
+              password,
+            });
+
+            if (error) {
+              throw error;
+            }
+
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('full_name, role')
+              .eq('id', data.user?.id ?? '')
+              .maybeSingle();
+
+            const userName =
+              profileData?.full_name ||
+              data.user?.user_metadata?.full_name ||
+              data.user?.email ||
+              'User';
+            const userRole = profileData?.role === 'admin' ? 'admin' : 'user';
+
+            toast({
+              title: "Signup Successful",
+              description: `Welcome, ${userName}!`,
+            });
+
+            const redirectTarget = userRole === 'admin' ? '/adminDashboard' : '/userDashboard';
+
+            setTimeout(() => {
+              router.push(redirectTarget);
+            }, 1000);
+        } catch (error: any) {
+            console.error('Signup error:', error);
+            console.error('Error details:', {
+                message: error.message,
+                stack: error.stack,
+                name: error.name
+            });
+            
+            toast({
+                title: "Signup Failed",
+                description: error.message || "Failed to create account. Please try again.",
+                variant: "destructive",
+            })
+        } finally {
+            setIsLoading(false)
+        }
     }
 
   return (
@@ -69,7 +191,15 @@ export default function SignupPage() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} />
+              <Input 
+                id="password" 
+                type="password" 
+                required 
+                value={password} 
+                onChange={(e) => setPassword(e.target.value)} 
+                disabled={isLoading}
+                placeholder="At least 6 characters"
+              />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Create an account"}

@@ -19,6 +19,7 @@ export type DataItem = {
   file_url?: string | null;
   link_url?: string | null;
   text_content?: string | null;
+  storage_path?: string | null;
   created_by: string; // user id
   updated_by?: string | null; // user id
   created_at: string;
@@ -45,3 +46,7 @@ export type Notification = {
   is_read: boolean;
   timestamp: string;
 }
+
+export type EnrichedDataItem = DataItem & { uploader?: User; sharedWith?: string[] };
+export type EnrichedActivityLog = ActivityLog & { user?: User };
+export type EnrichedNotification = Notification & { sender_details?: User };

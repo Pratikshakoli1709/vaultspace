@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from '@/components/common/ThemeProvider';
+import { SupabaseProvider } from '@/components/SupabaseProvider';
 
 export const metadata: Metadata = {
   title: 'VaultSpace',
@@ -27,7 +28,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <SupabaseProvider>
+            {children}
+          </SupabaseProvider>
           <Toaster />
         </ThemeProvider>
       </body>

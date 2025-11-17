@@ -1,3 +1,13 @@
+-- VaultSpace Database Setup Script
+-- Run this script in your Supabase SQL editor to set up the database tables
+
+-- First, drop existing tables if they exist (be careful with this in production!)
+-- drop table if exists public.notifications cascade;
+-- drop table if exists public.activity_logs cascade;
+-- drop table if exists public.data_items cascade;
+-- drop table if exists public.profiles cascade;
+-- drop function if exists public.handle_new_user() cascade;
+
 -- Create custom types
 create type public.user_role as enum ('admin', 'user');
 create type public.data_item_type as enum ('document', 'link', 'key', 'image');
@@ -16,8 +26,8 @@ create table public.profiles (
 
   primary key (id)
 );
+
 -- Set up Row Level Security (RLS)
--- See https://supabase.com/docs/guides/auth/row-level-security
 alter table public.profiles
   enable row level security;
 
@@ -31,7 +41,6 @@ create policy "Users can update own profile." on public.profiles
   for update using (auth.uid() = id);
 
 -- This trigger automatically creates a profile entry when a new user signs up via Supabase Auth.
--- See https://supabase.com/docs/guides/auth/managing-user-data#using-triggers for more details.
 create function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -110,3 +119,17 @@ alter table public.notifications enable row level security;
 create policy "All users can see broadcast notifications." on public.notifications for select using (type = 'broadcast');
 create policy "Users can see their own notifications." on public.notifications for select using (auth.uid() = receiver_id);
 create policy "Users can insert notifications." on public.notifications for insert with check (true);
+
+-- Grant necessary permissions
+grant usage on schema public to anon, authenticated;
+grant all on all tables in schema public to authenticated;
+grant all on all sequences in schema public to authenticated;
+
+-- Insert sample data for testing (uncomment to use)
+-- Sample admin user (you'll need to replace the UUID with an actual auth user ID)
+-- insert into public.profiles (id, full_name, email, role) 
+-- values ('00000000-0000-0000-0000-000000000001', 'Admin User', 'admin@example.com', 'admin');
+
+-- Sample regular user (you'll need to replace the UUID with an actual auth user ID)
+-- insert into public.profiles (id, full_name, email, role) 
+-- values ('00000000-0000-0000-0000-000000000002', 'Regular User', 'user@example.com', 'user');
