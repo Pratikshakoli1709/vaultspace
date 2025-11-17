@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -16,15 +17,80 @@ import type { User } from "@/lib/types";
 import { KeyRotationNotificationDialog } from "./KeyRotationNotificationDialog";
 import { Button } from "../ui/button";
 import { Bot } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { mapProfileRowToUser, type ProfileRow } from "@/lib/supabase-mappers";
 
 interface UserManagementProps {
+  currentUser: User;
   users: User[];
+  onUserRoleUpdated?: (user: User) => void;
 }
 
-export function UserManagement({ users }: UserManagementProps) {
-  // In a real app, toggling the switch would call a server action to update the user's role.
-  const handleRoleChange = (userId: string, newRole: User['role']) => {
-    console.log(`Changing role for user ${userId} to ${newRole}`);
+const ADMIN_EMAIL_ALLOWLIST = new Set(['atharv@gmail.com', 'ankita@gmail.com']);
+
+export function UserManagement({ currentUser, users, onUserRoleUpdated }: UserManagementProps) {
+  const canManageAdmins =
+    currentUser.email !== undefined &&
+    ADMIN_EMAIL_ALLOWLIST.has(currentUser.email.toLowerCase());
+
+  const { toast } = useToast();
+  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
+
+  const handleRoleChange = async (user: User, newRole: User['role']) => {
+    if (!canManageAdmins) {
+      toast({
+        title: "Insufficient permissions",
+        description: "Only approved admins can change roles.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (user.role === newRole) return;
+
+    setPendingUserId(user.id);
+    try {
+      const response = await fetch('/api/admin/users/update-role', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          actorId: currentUser.id,
+          userId: user.id,
+          role: newRole,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error ?? 'Failed to update user role.');
+      }
+
+      const updatedProfile = result.user as ProfileRow | undefined;
+
+      if (!updatedProfile) {
+        throw new Error('Server did not return the updated user.');
+      }
+
+      const updatedUser = mapProfileRowToUser(updatedProfile);
+      onUserRoleUpdated?.(updatedUser);
+
+      toast({
+        title: "Role updated",
+        description: `${updatedUser.name} is now ${newRole === 'admin' ? 'an admin' : 'a standard user'}.`,
+      });
+    } catch (error) {
+      console.error('Failed to update user role', error);
+      toast({
+        title: "Unable to update role",
+        description: error instanceof Error ? error.message : 'Unexpected error occurred.',
+        variant: "destructive",
+      });
+    } finally {
+      setPendingUserId(null);
+    }
   };
 
   return (
@@ -59,7 +125,10 @@ export function UserManagement({ users }: UserManagementProps) {
                     <Switch
                       id={`admin-switch-${user.id}`}
                       checked={user.role === 'admin'}
-                      onCheckedChange={(checked) => handleRoleChange(user.id, checked ? 'admin' : 'user')}
+                      disabled={!canManageAdmins || pendingUserId === user.id}
+                      onCheckedChange={(checked) => {
+                        void handleRoleChange(user, checked ? 'admin' : 'user');
+                      }}
                       aria-label={`Toggle admin role for ${user.name}`}
                     />
                   </div>

@@ -3,12 +3,13 @@
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { User } from "@/lib/types";
-import type { EnrichedDataItem, EnrichedActivityLog } from "@/lib/data";
+import type { EnrichedDataItem, EnrichedActivityLog } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AssetList } from "./AssetList";
 import { UserManagement } from "./UserManagement";
 import { ActivityLogList } from "./ActivityLog";
+import { AddUser } from "./AddUser";
 import { Activity, Archive, Users } from "lucide-react";
 
 interface ControlledDashboardProps {
@@ -16,9 +17,22 @@ interface ControlledDashboardProps {
   users: User[];
   assets: EnrichedDataItem[];
   activityLogs: EnrichedActivityLog[];
+  onAssetDeleted?: (assetId: string) => void;
+  onAssetUpdated?: (asset: EnrichedDataItem) => void;
+  onUserRoleUpdated?: (user: User) => void;
+  onUserCreated?: () => void;
 }
 
-export function ControlledDashboard({ currentUser, users, assets, activityLogs }: ControlledDashboardProps) {
+export function ControlledDashboard({
+  currentUser,
+  users,
+  assets,
+  activityLogs,
+  onAssetDeleted,
+  onAssetUpdated,
+  onUserRoleUpdated,
+  onUserCreated,
+}: ControlledDashboardProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -43,37 +57,49 @@ export function ControlledDashboard({ currentUser, users, assets, activityLogs }
   );
 
   return (
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <StatCard title="Total Users" value={users.length} icon={Users} />
-          <StatCard title="Total Assets" value={assets.length} icon={Archive} />
-          <StatCard title="Logged Activities" value={activityLogs.length} icon={Activity} />
-        </div>
-        <Tabs value={tab} onValueChange={onTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 max-w-md">
-            <TabsTrigger value="assets">All Assets</TabsTrigger>
-            <TabsTrigger value="activity">Activity Log</TabsTrigger>
-            <TabsTrigger value="users">User Management</TabsTrigger>
-          </TabsList>
-          <TabsContent value="assets">
-            <Card>
-              <CardHeader>
-                <CardTitle>All Company Assets</CardTitle>
-                <CardDescription>Browse and manage all shared digital assets.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <AssetList assets={assets} currentUser={currentUser} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="activity">
-            <ActivityLogList activityLogs={activityLogs} />
-          </TabsContent>
-          <TabsContent value="users">
-            <UserManagement users={users} />
-          </TabsContent>
-        </Tabs>
+      <div className="space-y-6 w-full">
+          <div className="w-full">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 px-4 md:px-6 lg:px-8">
+              <StatCard title="Total Users" value={users.length} icon={Users} />
+              <StatCard title="Total Assets" value={assets.length} icon={Archive} />
+              <StatCard title="Logged Activities" value={activityLogs.length} icon={Activity} />
+            </div>
+          </div>
+          <Tabs value={tab} onValueChange={onTabChange} className="w-full">
+            <TabsList className="grid w-full grid-cols-4 max-w-2xl mx-auto">
+              <TabsTrigger value="assets">All Assets</TabsTrigger>
+              <TabsTrigger value="activity">Activity Log</TabsTrigger>
+              <TabsTrigger value="users">User Management</TabsTrigger>
+              <TabsTrigger value="add-user">Add User</TabsTrigger>
+            </TabsList>
+            <TabsContent value="assets">
+              <Card className="w-full">
+                <CardHeader>
+                  <CardTitle>All Company Assets</CardTitle>
+                  <CardDescription>Browse and manage all shared digital assets.</CardDescription>
+                </CardHeader>
+                <CardContent className="w-full overflow-x-auto">
+                <AssetList assets={assets} currentUser={currentUser} onAssetDeleted={onAssetDeleted} onAssetUpdated={onAssetUpdated} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="activity">
+              <ActivityLogList activityLogs={activityLogs} />
+            </TabsContent>
+            <TabsContent value="users">
+              <UserManagement
+                currentUser={currentUser}
+                users={users}
+                onUserRoleUpdated={onUserRoleUpdated}
+              />
+            </TabsContent>
+            <TabsContent value="add-user">
+              <AddUser
+                currentUser={currentUser}
+                onUserCreated={onUserCreated}
+              />
+            </TabsContent>
+          </Tabs>
       </div>
     );
 }

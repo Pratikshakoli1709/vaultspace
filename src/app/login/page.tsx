@@ -1,8 +1,7 @@
-
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useMemo, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,36 +10,172 @@ import { Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
 import { Logo } from "@/components/common/Logo"
+import supabase from "@/lib/supabaseClient"
 
 export default function LoginPage() {
     const router = useRouter()
+    const searchParams = useSearchParams();
     const { toast } = useToast()
     const [isLoading, setIsLoading] = useState(false)
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
 
+    const normalizedAllowlist = useMemo(
+      () => ['atharv@gmail.com', 'ankita@gmail.com'],
+      [],
+    );
+
     const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault()
         setIsLoading(true)
-        
-        const isSpecialUser = email === 'Pratiksha Koli';
-        const welcomeMessage = isSpecialUser ? `Welcome, Pratiksha Koli!` : `Welcome, ${email || 'User'}!`;
-        
-        toast({
-            title: "Login Successful",
-            description: welcomeMessage,
-        })
-        
-        const nameParam = encodeURIComponent(email);
+        const normalizedEmailInput = email.trim().toLowerCase();
+        if (!normalizedEmailInput) {
+            toast({
+                title: "Login Failed",
+                description: "Please enter a valid email.",
+                variant: "destructive",
+            });
+            setIsLoading(false);
+            return;
+        }
 
-        // Use a short timeout to allow the user to see the toast before redirecting
-        setTimeout(() => {
-            if (isSpecialUser) {
-                router.push(`/adminDashboard?name=${nameParam}`);
-            } else {
-                router.push(`/userDashboard?name=${nameParam}`);
+        try {
+            // Sign in with Supabase
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email: normalizedEmailInput,
+                password,
+            })
+
+            if (error) {
+                console.error('Supabase login error:', error);
+                // Provide more specific error messages
+                if (error.message.includes('Invalid login credentials')) {
+                    throw new Error('Invalid email or password. Please check your credentials and try again.');
+                } else if (error.message.includes('Email not confirmed')) {
+                    throw new Error('Please confirm your email address before logging in. Check your inbox for the confirmation link.');
+                } else {
+                    throw error;
+                }
             }
-        }, 1000);
+
+            if (!data.user) {
+                throw new Error('Login failed. No user data returned.');
+            }
+
+            // Fetch user role from profiles table with error handling
+            try {
+                const normalizedEmail = (data.user?.email || '').toLowerCase();
+
+                let { data: profileData, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('full_name, role')
+                    .eq('id', data.user?.id)
+                    .maybeSingle();
+
+                // If profile doesn't exist, create it
+                if (profileError || !profileData) {
+                  console.log('Profile not found, creating one...', profileError);
+                  const role = normalizedAllowlist.includes(normalizedEmail) ? 'admin' : 'user';
+                  const { error: upsertError } = await supabase
+                    .from('profiles')
+                    .upsert(
+                      {
+                        id: data.user.id,
+                        email: normalizedEmail,
+                        full_name: data.user.user_metadata?.full_name || null,
+                        avatar_url: `https://i.pravatar.cc/150?u=${encodeURIComponent(normalizedEmail)}`,
+                        role,
+                      },
+                      { onConflict: 'id' },
+                    );
+
+                  if (upsertError) {
+                    console.error('Failed to create profile:', upsertError);
+                  } else {
+                    // Fetch the newly created profile
+                    const { data: newProfileData } = await supabase
+                      .from('profiles')
+                      .select('full_name, role')
+                      .eq('id', data.user?.id)
+                      .maybeSingle();
+                    profileData = newProfileData;
+                  }
+                }
+
+                let userRole = profileData?.role ?? 'user';
+
+                if (profileData?.role === 'admin') {
+                  userRole = 'admin';
+                } else if (normalizedAllowlist.includes(normalizedEmail)) {
+                  userRole = 'admin';
+                }
+
+                const userName =
+                  profileData?.full_name ||
+                  data.user?.user_metadata?.full_name ||
+                  data.user?.email ||
+                  'User';
+                
+                console.log('Login successful - User role:', userRole, 'Email:', normalizedEmail);
+                
+                toast({
+                    title: "Login Successful",
+                    description: `Welcome, ${userName}!`,
+                })
+                
+                const redirectTarget =
+                  searchParams.get('redirectTo') ||
+                  (userRole === 'admin' ? '/adminDashboard' : '/userDashboard');
+
+                console.log('Redirecting to:', redirectTarget);
+                
+                // Wait a bit for session to be fully established
+                await new Promise((resolve) => setTimeout(resolve, 500));
+                
+                router.push(redirectTarget);
+            } catch (profileFetchError) {
+                console.error('Profile fetch error:', profileFetchError);
+                // Fallback to user role if profile fetch fails
+                const normalizedEmail = (data.user?.email || '').toLowerCase();
+                const userRole = normalizedAllowlist.includes(normalizedEmail) ? 'admin' : 'user';
+                const userName = data.user?.email || 'User';
+                
+                console.log('Login successful (fallback) - User role:', userRole, 'Email:', normalizedEmail);
+                
+                toast({
+                    title: "Login Successful",
+                    description: `Welcome, ${userName}!`,
+                })
+                
+                const redirectTarget =
+                  searchParams.get('redirectTo') ||
+                  (userRole === 'admin' ? '/adminDashboard' : '/userDashboard');
+
+                console.log('Redirecting to:', redirectTarget);
+                
+                // Wait a bit for session to be fully established
+                await new Promise((resolve) => setTimeout(resolve, 500));
+                
+                router.push(redirectTarget);
+            }
+        } catch (error: any) {
+            console.error('Login error:', error);
+            console.error('Error details:', {
+                message: error.message,
+                stack: error.stack,
+                name: error.name
+            });
+            
+            const errorMessage = error.message || "Invalid credentials. Please try again.";
+            
+            toast({
+                title: "Login Failed",
+                description: errorMessage,
+                variant: "destructive",
+            });
+        } finally {
+            setIsLoading(false);
+        }
     }
 
   return (

@@ -7,11 +7,13 @@ import {
     DialogHeader,
     DialogTitle,
   } from "@/components/ui/dialog"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Image from "next/image"
-import type { DataItem } from "@/lib/types";
+import { formatDistanceToNow } from "date-fns";
+import type { EnrichedDataItem } from "@/lib/types";
 
 interface AssetPreviewDialogProps {
-    asset: DataItem | null;
+    asset: EnrichedDataItem | null;
     onOpenChange: (open: boolean) => void;
 }
 
@@ -27,8 +29,27 @@ export function AssetPreviewDialog({ asset, onOpenChange }: AssetPreviewDialogPr
             <DialogContent className="max-w-3xl">
                 <DialogHeader>
                     <DialogTitle>{asset.title}</DialogTitle>
-                    <DialogDescription>
-                        Asset type: {asset.type}
+                    <DialogDescription asChild>
+                        <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-2">
+                                <span>Asset type: {asset.type}</span>
+                                {asset.uploader && (
+                                    <>
+                                        <span>•</span>
+                                        <span className="flex items-center gap-2">
+                                            <Avatar className="h-5 w-5">
+                                                <AvatarImage src={asset.uploader.avatarUrl} />
+                                                <AvatarFallback>{asset.uploader.name.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            Uploaded by {asset.uploader.name}
+                                        </span>
+                                    </>
+                                )}
+                            </div>
+                            <span>
+                                Uploaded {formatDistanceToNow(new Date(asset.created_at), { addSuffix: true })}
+                            </span>
+                        </div>
                     </DialogDescription>
                 </DialogHeader>
                 <div className="mt-4 max-h-[70vh] overflow-auto rounded-md border">

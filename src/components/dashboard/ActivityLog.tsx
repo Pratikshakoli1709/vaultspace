@@ -9,8 +9,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { EnrichedActivityLog } from "@/lib/data";
-import { formatDistanceToNow } from "date-fns";
+import type { EnrichedActivityLog } from "@/lib/types";
+import { format } from "date-fns";
 
 interface ActivityLogListProps {
   activityLogs: EnrichedActivityLog[];
@@ -27,12 +27,12 @@ const actionColors: Record<string, string> = {
 
 export function ActivityLogList({ activityLogs }: ActivityLogListProps) {
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
         <CardTitle>Activity Log</CardTitle>
         <CardDescription>An audit trail of all actions taken within VaultSpace.</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="w-full overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -64,7 +64,14 @@ export function ActivityLogList({ activityLogs }: ActivityLogListProps) {
                 </TableCell>
                 <TableCell className="hidden md:table-cell">{log.item_title || "N/A"}</TableCell>
                 <TableCell className="text-right">
-                  {formatDistanceToNow(new Date(log.timestamp), { addSuffix: true })}
+                  <div className="flex flex-col items-end">
+                    <span className="text-sm font-medium">
+                      {format(new Date(log.timestamp), 'MMM d, yyyy')}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {format(new Date(log.timestamp), 'h:mm a')}
+                    </span>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

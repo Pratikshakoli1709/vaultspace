@@ -1,9 +1,8 @@
 
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useFormStatus } from "react-dom"
-import { Button } from "@/components/ui/button"
+import { useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -12,58 +11,109 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import type { DataItemType, User, DataItem } from "@/lib/types"
-import { useToast } from "@/hooks/use-toast"
-import { uploadAsset } from "@/lib/actions"
-import { Loader2 } from "lucide-react"
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import type { DataItemType, EnrichedDataItem, User } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
+import { uploadAssetClient } from "@/lib/asset-service";
+import { Loader2 } from "lucide-react";
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending}>
-      {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-      Upload Asset
-    </Button>
-  );
+interface UploadAssetDialogProps {
+  children: React.ReactNode;
+  user: User;
+  onAssetCreated: (asset: EnrichedDataItem) => void;
+  availableUsers?: User[];
 }
 
-export function UploadAssetDialog({ children, user, onAssetUpload }: { children: React.ReactNode, user: User, onAssetUpload: (asset: DataItem) => void }) {
-  const [assetType, setAssetType] = useState<DataItemType>("link")
-  const [open, setOpen] = useState(false)
-  const { toast } = useToast()
+export function UploadAssetDialog({
+  children,
+  user,
+  onAssetCreated,
+  availableUsers = [],
+}: UploadAssetDialogProps) {
+  const [assetType, setAssetType] = useState<DataItemType>("link");
+  const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sharedWith, setSharedWith] = useState<string[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
+  const { toast } = useToast();
 
-  const handleUploadAction = async (formData: FormData) => {
-    formData.append('type', assetType);
-    formData.append('created_by', user.id);
+  const shareTargets = useMemo(
+    () => availableUsers.filter((candidate) => candidate.id !== user.id),
+    [availableUsers, user.id],
+  );
 
-    const result = await uploadAsset(formData);
+  const toggleSharedUser = (userId: string) => {
+    setSharedWith((prev) => {
+      const updated = prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId];
+      // Update selectAll state based on whether all users are selected
+      setSelectAll(updated.length === shareTargets.length && shareTargets.length > 0);
+      return updated;
+    });
+  };
 
-    if (result.success && result.data) {
-      toast({
-        title: "Asset Uploaded",
-        description: `"${formData.get('title')}" has been added to the vault.`,
-      });
-      onAssetUpload(result.data); // Call the callback to update parent state
-      setOpen(false);
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSharedWith([]);
+      setSelectAll(false);
     } else {
+      setSharedWith(shareTargets.map((u) => u.id));
+      setSelectAll(true);
+    }
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+
+    const formData = new FormData(form);
+    const fileField = formData.get("file");
+    const file = fileField instanceof File && fileField.size > 0 ? fileField : null;
+
+    setIsSubmitting(true);
+    const result = await uploadAssetClient({
+      title: (formData.get("title") as string) ?? "",
+      type: assetType,
+      linkUrl: formData.get("link_url")?.toString() ?? null,
+      textContent: formData.get("text_content")?.toString() ?? null,
+      file,
+      currentUser: user,
+      sharedWithUserIds: sharedWith,
+    });
+    setIsSubmitting(false);
+
+    if (!result.success) {
        toast({
         variant: "destructive",
         title: "Upload Failed",
-        description: result.error || "An unknown error occurred.",
+        description: result.error,
       });
+      return;
     }
-  }
+
+    toast({
+      title: "Asset Uploaded",
+      description: `"${result.asset.title}" has been added to the vault.`,
+      });
+
+    onAssetCreated(result.asset);
+    form.reset();
+    setAssetType("link");
+    setSharedWith([]);
+    setSelectAll(false);
+    setOpen(false);
+  };
 
   const renderContentField = () => {
     switch (assetType) {
@@ -112,7 +162,7 @@ export function UploadAssetDialog({ children, user, onAssetUpload }: { children:
             Upload a new asset to the company vault. Select the type and fill in the details.
           </DialogDescription>
         </DialogHeader>
-        <form action={handleUploadAction} className="space-y-4 pt-4">
+        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
             <div>
               <Label htmlFor="title">Asset Name</Label>
               <Input id="title" name="title" placeholder="e.g., Q3 Financial Report" required />
@@ -135,8 +185,39 @@ export function UploadAssetDialog({ children, user, onAssetUpload }: { children:
 
           {renderContentField()}
 
+          {shareTargets.length > 0 && (
+            <div>
+              <Label>Share with teammates</Label>
+              <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border p-3">
+                <label className="flex items-center gap-2 text-sm font-medium">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4"
+                    checked={selectAll}
+                    onChange={handleSelectAll}
+                  />
+                  <span>All</span>
+                </label>
+                {shareTargets.map((candidate) => (
+                  <label key={candidate.id} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4"
+                      checked={sharedWith.includes(candidate.id)}
+                      onChange={() => toggleSharedUser(candidate.id)}
+                    />
+                    <span>{candidate.name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
           <DialogFooter>
-            <SubmitButton />
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Upload Asset
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

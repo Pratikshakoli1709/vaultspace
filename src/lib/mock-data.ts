@@ -44,6 +44,30 @@ const MOCK_USERS: User[] = [
     },
 ];
 
+type MockAssignment = {
+  projectId: string;
+  userId: string;
+  assignedAt: string;
+};
+
+const MOCK_ASSIGNMENTS: MockAssignment[] = [
+  {
+    projectId: 'project-1',
+    userId: 'user-2',
+    assignedAt: '2024-07-15T08:00:00Z',
+  },
+  {
+    projectId: 'project-1',
+    userId: 'user-4',
+    assignedAt: '2024-07-18T11:45:00Z',
+  },
+  {
+    projectId: 'project-2',
+    userId: 'user-3',
+    assignedAt: '2024-07-19T10:30:00Z',
+  },
+];
+
 const MOCK_DATA_ITEMS: DataItem[] = [
   {
     id: 'item-1',
@@ -132,3 +156,4 @@ export const getMockUsers = (): User[] => MOCK_USERS;
 export const getMockDataItems = (): DataItem[] => MOCK_DATA_ITEMS;
 export const getMockActivityLogs = (): ActivityLog[] => MOCK_ACTIVITY_LOGS;
 export const getMockNotifications = (): Notification[] => MOCK_NOTIFICATIONS;
+export const getMockAssignments = (): MockAssignment[] => MOCK_ASSIGNMENTS;

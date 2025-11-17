@@ -16,18 +16,22 @@ import { Home, Settings, Shield, LogOut } from "lucide-react"
 import { User } from "@/lib/types"
 import { Logo } from "./Logo"
 import { useRouter } from "next/navigation"
+import { useSupabase } from "@/components/SupabaseProvider"
 
 export function AppSidebar({ user }: { user: User }) {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
+    const { signOut } = useSupabase();
 
-    const handleLogout = () => {
-        router.push('/');
+    const handleLogout = async () => {
+        await signOut();
+        router.push('/login');
+        router.refresh();
     }
     
     const dashboardPath = user.role === 'admin' ? '/adminDashboard' : '/userDashboard';
-    const settingsPath = `/settings?name=${encodeURIComponent(user.name)}`;
+    const settingsPath = `/settings`;
     const adminPanelPath = `/adminDashboard?tab=users`;
 
 

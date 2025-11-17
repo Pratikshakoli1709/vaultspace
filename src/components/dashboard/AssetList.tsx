@@ -30,44 +30,72 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { MoreHorizontal, Copy, Eye, Trash2, Edit, ExternalLink } from "lucide-react";
-import { DataItem, User } from "@/lib/types";
-import { formatDistanceToNow } from "date-fns";
+import { MoreHorizontal, Copy, Eye, Trash2, Edit, ExternalLink, Loader2 } from "lucide-react";
+import type { DataItem, User } from "@/lib/types";
+import { format } from "date-fns";
 import { AssetTypeIcon } from "../icons";
 import { useToast } from "@/hooks/use-toast";
 import { AssetPreviewDialog } from "./AssetPreviewDialog";
-import { EnrichedDataItem } from "@/lib/data";
-import { deleteAsset, logActivity } from "@/lib/actions";
+import { EditAssetDialog } from "./EditAssetDialog";
+import type { EnrichedDataItem } from "@/lib/types";
+import { deleteAssetClient, logActivityClient } from "@/lib/asset-service";
 
 interface AssetListProps {
   assets: EnrichedDataItem[];
   currentUser: User;
+  onAssetDeleted?: (assetId: string) => void;
+  onAssetUpdated?: (asset: EnrichedDataItem) => void;
 }
 
-export function AssetList({ assets, currentUser }: AssetListProps) {
+export function AssetList({ assets, currentUser, onAssetDeleted, onAssetUpdated }: AssetListProps) {
     const { toast } = useToast();
     const [previewingAsset, setPreviewingAsset] = useState<DataItem | null>(null);
+    const [editingAsset, setEditingAsset] = useState<EnrichedDataItem | null>(null);
     const [deletingAsset, setDeletingAsset] = useState<DataItem | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
-    const handleCopy = (asset: DataItem) => {
+    const handleCopy = async (asset: DataItem) => {
         if (!asset.text_content) return;
         navigator.clipboard.writeText(asset.text_content);
         toast({
             title: "Key Copied",
             description: `The key for "${asset.title}" has been copied to your clipboard.`,
         });
-        logActivity({
-          user_id: currentUser.id,
+        await logActivityClient({
+          userId: currentUser.id,
           action: 'COPIED',
-          item_id: asset.id,
-          item_title: asset.title
+          itemId: asset.id,
+          itemTitle: asset.title
         });
+        
+        // Notify admins when a key is copied
+        if (asset.type === 'key') {
+          const { notifyAllAdmins } = await import('@/lib/notifications');
+          await notifyAllAdmins(
+            `API Key "${asset.title}" was copied by ${currentUser.name || currentUser.email}`,
+            currentUser.id,
+          );
+        }
     };
     
     const handleDelete = async () => {
         if (!deletingAsset) return;
+        setIsDeleting(true);
         
-        await deleteAsset(deletingAsset.id);
+        const result = await deleteAssetClient({ 
+            assetId: deletingAsset.id,
+            currentUser 
+        });
+
+        if (!result.success) {
+            toast({
+                variant: "destructive",
+                title: "Delete Failed",
+                description: result.error,
+            });
+            setIsDeleting(false);
+            return;
+        }
 
         toast({
             title: "Asset Deleted",
@@ -75,19 +103,34 @@ export function AssetList({ assets, currentUser }: AssetListProps) {
         });
 
         // Log the activity
-        logActivity({
-          user_id: currentUser.id,
+        void logActivityClient({
+          userId: currentUser.id,
           action: 'DELETED',
-          item_id: deletingAsset.id,
-          item_title: deletingAsset.title
+          itemId: deletingAsset.id,
+          itemTitle: deletingAsset.title
         });
 
+        onAssetDeleted?.(deletingAsset.id);
         setDeletingAsset(null);
+        setIsDeleting(false);
     }
 
     const canPerformAction = (asset: DataItem) => {
       return currentUser.role === 'admin' || currentUser.id === asset.created_by;
     }
+
+    const canEditAsset = (asset: EnrichedDataItem) => {
+      // For keys, allow uploader and admins to edit
+      if (asset.type === 'key') {
+        return currentUser.role === 'admin' || currentUser.id === asset.created_by;
+      }
+      return false;
+    }
+
+    const handleAssetUpdated = (updatedAsset: EnrichedDataItem) => {
+      onAssetUpdated?.(updatedAsset);
+      setEditingAsset(null);
+    };
 
   return (
     <>
@@ -124,7 +167,14 @@ export function AssetList({ assets, currentUser }: AssetListProps) {
                 </div>
               </TableCell>
               <TableCell className="hidden lg:table-cell">
-                {formatDistanceToNow(new Date(asset.updated_at), { addSuffix: true })}
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">
+                    {format(new Date(asset.updated_at), 'MMM d, yyyy')}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {format(new Date(asset.updated_at), 'h:mm a')}
+                  </span>
+                </div>
               </TableCell>
               <TableCell>
                 <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
@@ -140,10 +190,15 @@ export function AssetList({ assets, currentUser }: AssetListProps) {
                       {asset.type === 'link' && asset.link_url && <DropdownMenuItem asChild><a href={asset.link_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="mr-2 h-4 w-4"/>Open Link</a></DropdownMenuItem>}
                       {(asset.type === 'image' || asset.type === 'document') && <DropdownMenuItem onSelect={() => setPreviewingAsset(asset)}><Eye className="mr-2 h-4 w-4"/>Preview</DropdownMenuItem>}
                       
+                      {canEditAsset(asset) && (
+                        <DropdownMenuItem onSelect={() => setEditingAsset(asset)}>
+                          <Edit className="mr-2 h-4 w-4"/>
+                          Edit
+                        </DropdownMenuItem>
+                      )}
                       {canPerformAction(asset) && (
                           <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem disabled><Edit className="mr-2 h-4 w-4"/>Edit</DropdownMenuItem>
+                              {canEditAsset(asset) && <DropdownMenuSeparator />}
                               <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => setDeletingAsset(asset)}>
                                 <Trash2 className="mr-2 h-4 w-4"/>
                                 <span>Delete</span>
@@ -161,7 +216,15 @@ export function AssetList({ assets, currentUser }: AssetListProps) {
 
       <AssetPreviewDialog asset={previewingAsset} onOpenChange={(open) => !open && setPreviewingAsset(null)} />
       
-      <AlertDialog open={!!deletingAsset} onOpenChange={(open) => !open && setDeletingAsset(null)}>
+      <EditAssetDialog
+        asset={editingAsset}
+        open={!!editingAsset}
+        onOpenChange={(open) => !open && setEditingAsset(null)}
+        currentUser={currentUser}
+        onAssetUpdated={handleAssetUpdated}
+      />
+      
+      <AlertDialog open={!!deletingAsset} onOpenChange={(open) => !open && !isDeleting && setDeletingAsset(null)}>
         <AlertDialogContent>
             <AlertDialogHeader>
                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
@@ -172,8 +235,11 @@ export function AssetList({ assets, currentUser }: AssetListProps) {
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} disabled={isDeleting}>
+                  {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Delete
+                </AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
