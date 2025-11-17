@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { Suspense, useMemo, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Logo } from "@/components/common/Logo"
 import supabase from "@/lib/supabaseClient"
 
-export default function LoginPage() {
+function LoginForm() {
     const router = useRouter()
     const searchParams = useSearchParams();
     const { toast } = useToast()
@@ -158,15 +158,13 @@ export default function LoginPage() {
                 
                 router.push(redirectTarget);
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : "Invalid credentials. Please try again.";
             console.error('Login error:', error);
             console.error('Error details:', {
-                message: error.message,
-                stack: error.stack,
-                name: error.name
+                message: errorMessage,
+                name: error instanceof Error ? error.name : 'Unknown',
             });
-            
-            const errorMessage = error.message || "Invalid credentials. Please try again.";
             
             toast({
                 title: "Login Failed",
@@ -178,21 +176,8 @@ export default function LoginPage() {
         }
     }
 
-  return (
-    <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
-      <div className="flex items-center justify-center py-12">
-        <div className="mx-auto grid w-[350px] gap-6">
-          <div className="grid gap-2 text-center">
-            <div className="flex items-center justify-center gap-2 mb-4">
-                <Logo />
-                <h1 className="text-3xl font-bold">VaultSpace</h1>
-            </div>
-            <h2 className="text-2xl font-bold">Welcome Back</h2>
-            <p className="text-balance text-muted-foreground">
-              Enter your credentials to access your secure vault.
-            </p>
-          </div>
-          <form onSubmit={handleLogin} className="grid gap-4">
+    return (
+        <form onSubmit={handleLogin} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} />
@@ -213,6 +198,54 @@ export default function LoginPage() {
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Login"}
             </Button>
           </form>
+    );
+}
+
+function LoginFormFallback() {
+    return (
+        <div className="grid gap-4">
+            <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" placeholder="m@example.com" disabled />
+            </div>
+            <div className="grid gap-2">
+                <div className="flex items-center">
+                    <Label htmlFor="password">Password</Label>
+                    <Link
+                        href="#"
+                        className="ml-auto inline-block text-sm underline"
+                    >
+                        Forgot your password?
+                    </Link>
+                </div>
+                <Input id="password" type="password" disabled />
+            </div>
+            <Button type="submit" className="w-full" disabled>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Loading...
+            </Button>
+        </div>
+    );
+}
+
+export default function LoginPage() {
+  return (
+    <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
+      <div className="flex items-center justify-center py-12">
+        <div className="mx-auto grid w-[350px] gap-6">
+          <div className="grid gap-2 text-center">
+            <div className="flex items-center justify-center gap-2 mb-4">
+                <Logo />
+                <h1 className="text-3xl font-bold">VaultSpace</h1>
+            </div>
+            <h2 className="text-2xl font-bold">Welcome Back</h2>
+            <p className="text-balance text-muted-foreground">
+              Enter your credentials to access your secure vault.
+            </p>
+          </div>
+          <Suspense fallback={<LoginFormFallback />}>
+            <LoginForm />
+          </Suspense>
           <div className="mt-4 text-center text-sm">
             Don&apos;t have an account?{" "}
             <Link href="/signup" className="underline">
