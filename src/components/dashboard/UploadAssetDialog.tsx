@@ -120,27 +120,27 @@ export function UploadAssetDialog({
       case "document":
       case "image":
         return (
-          <div className="grid w-full max-w-sm items-center gap-1.5">
-            <Label htmlFor="file">File</Label>
-            <Input id="file" name="file" type="file" required />
+          <div className="grid w-full items-center gap-1.5">
+            <Label htmlFor="file" className="text-sm sm:text-base">File</Label>
+            <Input id="file" name="file" type="file" required className="text-sm sm:text-base h-9 sm:h-10" />
           </div>
         )
       case "link":
         return (
           <div>
-            <Label htmlFor="link_url">URL</Label>
-            <Input id="link_url" name="link_url" placeholder="https://example.com" required />
+            <Label htmlFor="link_url" className="text-sm sm:text-base">URL</Label>
+            <Input id="link_url" name="link_url" placeholder="https://example.com" required className="text-sm sm:text-base h-9 sm:h-10 mt-1" />
           </div>
         )
       case "key":
         return (
           <div>
-            <Label htmlFor="text_content">Key Value</Label>
+            <Label htmlFor="text_content" className="text-sm sm:text-base">Key Value</Label>
             <Textarea
               id="text_content"
               name="text_content"
               placeholder="Enter your secret key here"
-              className="font-mono"
+              className="font-mono text-sm sm:text-base mt-1 min-h-[100px]"
               required
             />
           </div>
@@ -155,23 +155,23 @@ export function UploadAssetDialog({
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="w-[calc(100vw-2rem)] sm:w-full max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Asset</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-lg sm:text-xl">Add New Asset</DialogTitle>
+          <DialogDescription className="text-sm">
             Upload a new asset to the company vault. Select the type and fill in the details.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 pt-4">
             <div>
-              <Label htmlFor="title">Asset Name</Label>
-              <Input id="title" name="title" placeholder="e.g., Q3 Financial Report" required />
+              <Label htmlFor="title" className="text-sm sm:text-base">Asset Name</Label>
+              <Input id="title" name="title" placeholder="e.g., Q3 Financial Report" required className="text-sm sm:text-base h-9 sm:h-10 mt-1" />
             </div>
 
             <div>
-                <Label htmlFor="asset-type">Asset Type</Label>
+                <Label htmlFor="asset-type" className="text-sm sm:text-base">Asset Type</Label>
                 <Select name="type" value={assetType} onValueChange={(value) => setAssetType(value as DataItemType)}>
-                    <SelectTrigger id="asset-type">
+                    <SelectTrigger id="asset-type" className="mt-1 h-9 sm:h-10">
                         <SelectValue placeholder="Select an asset type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -187,9 +187,9 @@ export function UploadAssetDialog({
 
           {shareTargets.length > 0 && (
             <div>
-              <Label>Share with teammates</Label>
-              <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border p-3">
-                <label className="flex items-center gap-2 text-sm font-medium">
+              <Label className="text-sm sm:text-base">Share with teammates</Label>
+              <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border p-3 mt-1">
+                <label className="flex items-center gap-2 text-xs sm:text-sm font-medium">
                   <input
                     type="checkbox"
                     className="h-4 w-4"
@@ -199,22 +199,22 @@ export function UploadAssetDialog({
                   <span>All</span>
                 </label>
                 {shareTargets.map((candidate) => (
-                  <label key={candidate.id} className="flex items-center gap-2 text-sm">
+                  <label key={candidate.id} className="flex items-center gap-2 text-xs sm:text-sm">
                     <input
                       type="checkbox"
                       className="h-4 w-4"
                       checked={sharedWith.includes(candidate.id)}
                       onChange={() => toggleSharedUser(candidate.id)}
                     />
-                    <span>{candidate.name}</span>
+                    <span className="truncate">{candidate.name}</span>
                   </label>
                 ))}
               </div>
             </div>
           )}
 
-          <DialogFooter>
-            <Button type="submit" disabled={isSubmitting}>
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+            <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto text-sm sm:text-base">
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Upload Asset
             </Button>

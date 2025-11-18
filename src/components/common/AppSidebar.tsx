@@ -37,10 +37,10 @@ export function AppSidebar({ user }: { user: User }) {
 
     return (
         <Sidebar>
-            <SidebarHeader className="h-16 flex items-center gap-2 px-4">
+            <SidebarHeader className="h-14 sm:h-16 flex items-center gap-2 px-3 sm:px-4">
                 <Logo />
-                <div className="flex flex-col">
-                    <h2 className="text-lg font-semibold text-sidebar-foreground tracking-tighter">
+                <div className="flex flex-col min-w-0">
+                    <h2 className="text-sm sm:text-base md:text-lg font-semibold text-sidebar-foreground tracking-tighter truncate">
                         VaultSpace
                     </h2>
                 </div>

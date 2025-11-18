@@ -26,22 +26,22 @@ export function AssetPreviewDialog({ asset, onOpenChange }: AssetPreviewDialogPr
 
     return (
         <Dialog open={!!asset} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-3xl">
+            <DialogContent className="w-[calc(100vw-2rem)] sm:w-full max-w-3xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>{asset.title}</DialogTitle>
+                    <DialogTitle className="text-lg sm:text-xl truncate">{asset.title}</DialogTitle>
                     <DialogDescription asChild>
-                        <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-2">
+                        <div className="flex flex-col gap-2 text-xs sm:text-sm text-muted-foreground">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
                                 <span>Asset type: {asset.type}</span>
                                 {asset.uploader && (
                                     <>
-                                        <span>•</span>
+                                        <span className="hidden sm:inline">•</span>
                                         <span className="flex items-center gap-2">
-                                            <Avatar className="h-5 w-5">
+                                            <Avatar className="h-4 w-4 sm:h-5 sm:w-5">
                                                 <AvatarImage src={asset.uploader.avatarUrl} />
-                                                <AvatarFallback>{asset.uploader.name.charAt(0)}</AvatarFallback>
+                                                <AvatarFallback className="text-xs">{asset.uploader.name.charAt(0)}</AvatarFallback>
                                             </Avatar>
-                                            Uploaded by {asset.uploader.name}
+                                            <span className="truncate">Uploaded by {asset.uploader.name}</span>
                                         </span>
                                     </>
                                 )}
@@ -52,7 +52,7 @@ export function AssetPreviewDialog({ asset, onOpenChange }: AssetPreviewDialogPr
                         </div>
                     </DialogDescription>
                 </DialogHeader>
-                <div className="mt-4 max-h-[70vh] overflow-auto rounded-md border">
+                <div className="mt-4 max-h-[60vh] sm:max-h-[70vh] overflow-auto rounded-md border">
                     {isImage && (
                         <Image 
                             src={contentUrl} 
@@ -63,10 +63,10 @@ export function AssetPreviewDialog({ asset, onOpenChange }: AssetPreviewDialogPr
                         />
                     )}
                     {isPDF && (
-                         <iframe src={contentUrl} className="w-full h-[70vh]" title={asset.title} />
+                         <iframe src={contentUrl} className="w-full h-[50vh] sm:h-[70vh]" title={asset.title} />
                     )}
                     {!isImage && !isPDF && (
-                        <div className="p-8 text-center text-muted-foreground">
+                        <div className="p-6 sm:p-8 text-center text-sm sm:text-base text-muted-foreground">
                             Preview is not available for this file type.
                         </div>
                     )}

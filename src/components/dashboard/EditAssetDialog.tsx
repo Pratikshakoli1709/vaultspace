@@ -83,28 +83,29 @@ export function EditAssetDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="w-[calc(100vw-2rem)] sm:w-full max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit {asset.type === 'key' ? 'API Key' : asset.type === 'link' ? 'Link' : 'Asset'}</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-lg sm:text-xl">Edit {asset.type === 'key' ? 'API Key' : asset.type === 'link' ? 'Link' : 'Asset'}</DialogTitle>
+          <DialogDescription className="text-sm">
             Update the details for this asset.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="edit-title">Title</Label>
+          <div className="grid gap-3 sm:gap-4 py-4">
+            <div className="grid gap-1.5 sm:gap-2">
+              <Label htmlFor="edit-title" className="text-sm sm:text-base">Title</Label>
               <Input
                 id="edit-title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
                 disabled={isSubmitting}
+                className="text-sm sm:text-base h-9 sm:h-10"
               />
             </div>
             {asset.type === 'key' && (
-              <div className="grid gap-2">
-                <Label htmlFor="edit-key">API Key</Label>
+              <div className="grid gap-1.5 sm:gap-2">
+                <Label htmlFor="edit-key" className="text-sm sm:text-base">API Key</Label>
                 <Textarea
                   id="edit-key"
                   value={textContent}
@@ -113,12 +114,13 @@ export function EditAssetDialog({
                   disabled={isSubmitting}
                   rows={4}
                   placeholder="Enter the API key value"
+                  className="text-sm sm:text-base font-mono min-h-[100px]"
                 />
               </div>
             )}
             {asset.type === 'link' && (
-              <div className="grid gap-2">
-                <Label htmlFor="edit-link">URL</Label>
+              <div className="grid gap-1.5 sm:gap-2">
+                <Label htmlFor="edit-link" className="text-sm sm:text-base">URL</Label>
                 <Input
                   id="edit-link"
                   type="url"
@@ -127,20 +129,22 @@ export function EditAssetDialog({
                   required
                   disabled={isSubmitting}
                   placeholder="https://example.com"
+                  className="text-sm sm:text-base h-9 sm:h-10"
                 />
               </div>
             )}
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
+              className="w-full sm:w-auto text-sm sm:text-base"
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto text-sm sm:text-base">
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

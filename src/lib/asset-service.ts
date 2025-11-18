@@ -168,11 +168,14 @@ export async function uploadAssetClient(params: UploadAssetParams): Promise<Uplo
     }
   }
 
-  await logActivityClient({
+  // Log activity (non-blocking - don't fail upload if logging fails)
+  void logActivityClient({
     userId: currentUser.id,
     action: 'UPLOADED',
     itemId: data.id,
     itemTitle: trimmedTitle,
+  }).catch((err) => {
+    console.warn('Activity logging failed (non-critical):', err);
   });
 
   // Notify admins if a key was uploaded
@@ -268,11 +271,14 @@ export async function updateAssetClient(params: UpdateAssetParams): Promise<Upda
 
   const mappedAsset = mapRowToAsset(data);
 
-  await logActivityClient({
+  // Log activity (non-blocking - don't fail update if logging fails)
+  void logActivityClient({
     userId: currentUser.id,
     action: 'EDITED',
     itemId: data.id,
     itemTitle: data.title,
+  }).catch((err) => {
+    console.warn('Activity logging failed (non-critical):', err);
   });
 
   // Notify admins if a key was edited
@@ -349,6 +355,12 @@ export async function logActivityClient({
   itemTitle,
 }: LogActivityParams): Promise<DeleteAssetResult> {
   try {
+    // Validate required parameters
+    if (!userId || !action) {
+      console.warn('logActivityClient: Missing required parameters', { userId, action });
+      return { success: false, error: 'Missing required parameters' };
+    }
+
     const { error } = await supabase.from('activity_logs').insert({
       user_id: userId,
       action,
@@ -357,29 +369,33 @@ export async function logActivityClient({
     });
 
     if (error) {
-      // Log error with proper serialization
-      console.error('Failed to log activity', {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint,
-        userId,
-        action,
-        itemId,
-      });
-      return { success: false, error: error.message };
+      // Log error with proper serialization - avoid logging empty objects
+      const errorDetails: Record<string, unknown> = {
+        message: error.message || 'Unknown error',
+        code: error.code || 'unknown',
+        userId: userId || 'unknown',
+        action: action || 'unknown',
+      };
+      
+      if (error.details) errorDetails.details = error.details;
+      if (error.hint) errorDetails.hint = error.hint;
+      if (itemId) errorDetails.itemId = itemId;
+      
+      console.error('Failed to log activity:', JSON.stringify(errorDetails, null, 2));
+      return { success: false, error: error.message || 'Failed to log activity' };
     }
 
     return { success: true };
   } catch (err) {
     // Handle unexpected errors gracefully
     const errorMessage = err instanceof Error ? err.message : String(err);
-    console.error('Failed to log activity - unexpected error', {
+    const errorDetails = {
       error: errorMessage,
-      userId,
-      action,
-      itemId,
-    });
+      userId: userId || 'unknown',
+      action: action || 'unknown',
+      itemId: itemId || null,
+    };
+    console.error('Failed to log activity - unexpected error:', JSON.stringify(errorDetails, null, 2));
     return { success: false, error: errorMessage };
   }
 }

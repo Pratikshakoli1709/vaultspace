@@ -191,30 +191,32 @@ function UserDashboardPageContent() {
         <SidebarProvider>
             <div className="flex min-h-screen bg-background">
                 <AppSidebar user={currentUser} />
-        <SidebarInset className="flex flex-1 flex-col bg-background main-layout-content-column">
-          <Header
-            user={currentUser}
-            notifications={notifications}
-            onAssetCreated={handleAssetCreated}
-            onUserUpdate={setCurrentUser}
-            shareableUsers={shareableUsers}
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            broadcastTargets={broadcastTargets}
-          />
-          <main className="flex-1 w-full">
-            <div className="dashboard-content-wrapper w-full space-y-6">
-              <div className="w-full pt-6">
-                <Dashboard
-                  currentUser={currentUser}
-                  assets={filteredAssets}
-                  activityLogs={userActivity}
-                  onAssetDeleted={handleAssetDeleted}
-                  onAssetUpdated={handleAssetUpdated}
-                />
+        <SidebarInset className="flex flex-grow flex-col bg-background main-layout-content-column">
+          <div className="dashboard-dynamic-margin">
+            <Header
+              user={currentUser}
+              notifications={notifications}
+              onAssetCreated={handleAssetCreated}
+              onUserUpdate={setCurrentUser}
+              shareableUsers={shareableUsers}
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              broadcastTargets={broadcastTargets}
+            />
+            <main className="w-full overflow-x-hidden">
+              <div className="w-full px-6 xl:px-10 2xl:px-16">
+                <div className="w-full pt-4 sm:pt-6 pb-4 sm:pb-6 space-y-4 sm:space-y-6">
+                  <Dashboard
+                    currentUser={currentUser}
+                    assets={filteredAssets}
+                    activityLogs={userActivity}
+                    onAssetDeleted={handleAssetDeleted}
+                    onAssetUpdated={handleAssetUpdated}
+                  />
+                </div>
               </div>
-            </div>
-                    </main>
+            </main>
+          </div>
                 </SidebarInset>
             </div>
         </SidebarProvider>

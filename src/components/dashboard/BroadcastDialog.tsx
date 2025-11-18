@@ -110,30 +110,30 @@ export function BroadcastDialog({ currentUser, targets }: BroadcastDialogProps) 
           Broadcast
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="w-[calc(100vw-2rem)] sm:w-full max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Send a Broadcast</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-lg sm:text-xl">Send a Broadcast</DialogTitle>
+          <DialogDescription className="text-sm">
             Select teammates to receive this announcement.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleBroadcast} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
-            <Input id="title" name="title" placeholder="e.g., Scheduled Maintenance" required />
+        <form onSubmit={handleBroadcast} className="space-y-3 sm:space-y-4">
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="title" className="text-sm sm:text-base">Title</Label>
+            <Input id="title" name="title" placeholder="e.g., Scheduled Maintenance" required className="text-sm sm:text-base h-9 sm:h-10" />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="message">Message</Label>
-            <Textarea id="message" name="message" placeholder="Describe the announcement..." required />
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="message" className="text-sm sm:text-base">Message</Label>
+            <Textarea id="message" name="message" placeholder="Describe the announcement..." required className="text-sm sm:text-base min-h-[100px]" />
           </div>
-          <div className="space-y-2">
-            <Label>Select recipients</Label>
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label className="text-sm sm:text-base">Select recipients</Label>
             <div className="max-h-48 space-y-2 overflow-y-auto rounded-md border p-3">
               {targets.length === 0 ? (
-                <p className="text-xs text-muted-foreground">No teammates available.</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">No teammates available.</p>
               ) : (
                 <>
-                  <label className="flex items-center gap-2 text-sm font-medium">
+                  <label className="flex items-center gap-2 text-xs sm:text-sm font-medium">
                     <input
                       type="checkbox"
                       className="h-4 w-4"
@@ -143,22 +143,22 @@ export function BroadcastDialog({ currentUser, targets }: BroadcastDialogProps) 
                     <span>All</span>
                   </label>
                   {targets.map((target) => (
-                    <label key={target.id} className="flex items-center gap-2 text-sm">
+                    <label key={target.id} className="flex items-center gap-2 text-xs sm:text-sm">
                       <input
                         type="checkbox"
                         className="h-4 w-4"
                         checked={selectedUserIds.includes(target.id)}
                         onChange={() => toggleRecipient(target.id)}
                       />
-                      <span>{target.name}</span>
+                      <span className="truncate">{target.name}</span>
                     </label>
                   ))}
                 </>
               )}
             </div>
           </div>
-          <DialogFooter>
-            <Button type="submit">Send Broadcast</Button>
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+            <Button type="submit" className="w-full sm:w-auto text-sm sm:text-base">Send Broadcast</Button>
           </DialogFooter>
         </form>
       </DialogContent>

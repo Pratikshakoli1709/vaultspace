@@ -18,35 +18,37 @@ export function Dashboard({ currentUser, assets, activityLogs, onAssetDeleted, o
 
   const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 sm:px-6 pt-4 sm:pt-6">
+        <CardTitle className="text-xs sm:text-sm font-medium">{title}</CardTitle>
+        <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
       </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
+      <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+        <div className="text-xl sm:text-2xl font-bold">{value}</div>
       </CardContent>
     </Card>
   );
 
   // Regular user view
   return (
-    <div className="space-y-6 w-full">
-      <div className="px-4 md:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold tracking-tight">Welcome, {currentUser.name.split(' ')[0]}</h1>
+    <div className="dashboard-center space-y-4 sm:space-y-6 w-full">
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Welcome, {currentUser.name.split(' ')[0]}</h1>
       </div>
       <div className="w-full">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 px-4 md:px-6 lg:px-8">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
           <StatCard title="Your Assets" value={assets.length} icon={Archive} />
           <StatCard title="Your Recent Activity" value={activityLogs.length} icon={Activity} />
         </div>
       </div>
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Your Assets</CardTitle>
-          <CardDescription>Browse and manage your shared digital assets.</CardDescription>
+          <CardTitle className="text-lg sm:text-xl">Your Assets</CardTitle>
+          <CardDescription className="text-sm">Browse and manage your shared digital assets.</CardDescription>
         </CardHeader>
-        <CardContent className="w-full overflow-x-auto">
-          <AssetList assets={assets} currentUser={currentUser} onAssetDeleted={onAssetDeleted} onAssetUpdated={onAssetUpdated} />
+        <CardContent className="w-full overflow-x-auto p-0 sm:p-6">
+          <div className="w-full min-w-0">
+            <AssetList assets={assets} currentUser={currentUser} onAssetDeleted={onAssetDeleted} onAssetUpdated={onAssetUpdated} />
+          </div>
         </CardContent>
       </Card>
     </div>
