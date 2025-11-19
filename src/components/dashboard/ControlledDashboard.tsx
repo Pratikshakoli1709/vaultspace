@@ -10,7 +10,8 @@ import { AssetList } from "./AssetList";
 import { UserManagement } from "./UserManagement";
 import { ActivityLogList } from "./ActivityLog";
 import { AddUser } from "./AddUser";
-import { Activity, Archive, Users } from "lucide-react";
+import { TeamManagement } from "./TeamManagement";
+import { Activity, Archive, Users, UsersRound } from "lucide-react";
 
 interface ControlledDashboardProps {
   currentUser: User;
@@ -66,10 +67,11 @@ export function ControlledDashboard({
             </div>
           </div>
           <Tabs value={tab} onValueChange={onTabChange} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 max-w-full sm:max-w-2xl mx-auto h-auto gap-1 sm:gap-2">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 max-w-full sm:max-w-3xl mx-auto h-auto gap-1 sm:gap-2">
               <TabsTrigger value="assets" className="text-[10px] sm:text-xs md:text-sm px-1.5 sm:px-2 md:px-3 lg:px-4 py-1.5 sm:py-2">All Assets</TabsTrigger>
               <TabsTrigger value="activity" className="text-[10px] sm:text-xs md:text-sm px-1.5 sm:px-2 md:px-3 lg:px-4 py-1.5 sm:py-2">Activity Log</TabsTrigger>
               <TabsTrigger value="users" className="text-[10px] sm:text-xs md:text-sm px-1.5 sm:px-2 md:px-3 lg:px-4 py-1.5 sm:py-2">Users</TabsTrigger>
+              <TabsTrigger value="teams" className="text-[10px] sm:text-xs md:text-sm px-1.5 sm:px-2 md:px-3 lg:px-4 py-1.5 sm:py-2">Teams</TabsTrigger>
               <TabsTrigger value="add-user" className="text-[10px] sm:text-xs md:text-sm px-1.5 sm:px-2 md:px-3 lg:px-4 py-1.5 sm:py-2">Add User</TabsTrigger>
             </TabsList>
             <TabsContent value="assets" className="mt-4 sm:mt-6">
@@ -94,6 +96,9 @@ export function ControlledDashboard({
                 users={users}
                 onUserRoleUpdated={onUserRoleUpdated}
               />
+            </TabsContent>
+            <TabsContent value="teams" className="mt-4 sm:mt-6">
+              <TeamManagement currentUser={currentUser} />
             </TabsContent>
             <TabsContent value="add-user" className="mt-4 sm:mt-6">
               <AddUser

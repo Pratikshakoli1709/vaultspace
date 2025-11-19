@@ -21,8 +21,13 @@ type ProfileRow = {
   created_at?: string | null;
 };
 
-const resolveRole = (role: string | null | undefined): UserRole =>
-  role === 'admin' ? 'admin' : 'user';
+const resolveRole = (role: string | null | undefined): UserRole => {
+  const resolved = role === 'admin' ? 'admin' : 'user';
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('resolveRole:', { input: role, output: resolved });
+  }
+  return resolved;
+};
 
 type SessionUser = {
   id: string;
@@ -99,25 +104,25 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
-          // Special case for atharv@gmail.com - treat as admin
-          if (session.user.email === 'atharv@gmail.com') {
-            setUser({
-              id: session.user.id,
-              name: 'Atharv',
-              email: session.user.email,
-              role: 'admin',
-              avatarUrl: `https://i.pravatar.cc/150?u=${encodeURIComponent(session.user.id)}`,
-              createdAt: new Date().toISOString(),
-            });
-            setIsLoading(false);
-            return;
-          }
-
           const profile = await fetchProfileRow(session.user.id);
-          setUser(buildUserFromProfile(session.user, profile.data ?? null));
+          const user = buildUserFromProfile(session.user, profile.data ?? null);
+          
+          // Log for debugging
+          console.log('SupabaseProvider - User loaded:', {
+            email: user.email,
+            role: user.role,
+            hasProfile: !!profile.data,
+            profileRole: profile.data?.role,
+            sessionUserId: session.user.id,
+          });
+          
+          setUser(user);
+        } else {
+          setUser(null);
         }
       } catch (error) {
         console.error('Unexpected error in checkSession:', error);
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
@@ -128,25 +133,28 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
-        // Special case for atharv@gmail.com - treat as admin
-        if (session.user.email === 'atharv@gmail.com') {
-          setUser({
-            id: session.user.id,
-            name: 'Atharv',
-            email: session.user.email,
-            role: 'admin',
-            avatarUrl: `https://i.pravatar.cc/150?u=${encodeURIComponent(session.user.id)}`,
-            createdAt: new Date().toISOString(),
-          });
-          setIsLoading(false);
-          return;
-        }
-
         // Fetch user profile with error handling
         (async () => {
-          const profile = await fetchProfileRow(session.user.id);
-          setUser(buildUserFromProfile(session.user, profile.data ?? null));
+          try {
+            const profile = await fetchProfileRow(session.user.id);
+            const user = buildUserFromProfile(session.user, profile.data ?? null);
+            
+            // Log for debugging
+            console.log('SupabaseProvider - Auth state changed, User loaded:', {
+              email: user.email,
+              role: user.role,
+              hasProfile: !!profile.data,
+              profileRole: profile.data?.role,
+              sessionUserId: session.user.id,
+            });
+            
+            setUser(user);
+          } catch (error) {
+            console.error('Error fetching profile on auth change:', error);
+            setUser(buildUserFallback(session.user));
+          } finally {
             setIsLoading(false);
+          }
         })();
       } else {
         setUser(null);

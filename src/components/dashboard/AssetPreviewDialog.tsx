@@ -29,10 +29,16 @@ export function AssetPreviewDialog({ asset, onOpenChange }: AssetPreviewDialogPr
             <DialogContent className="w-[calc(100vw-2rem)] sm:w-full max-w-3xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="text-lg sm:text-xl truncate">{asset.title}</DialogTitle>
-                    <DialogDescription asChild>
-                        <div className="flex flex-col gap-2 text-xs sm:text-sm text-muted-foreground">
+                <DialogDescription asChild>
+                    <div className="flex flex-col gap-2 text-xs sm:text-sm text-muted-foreground">
                             <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
                                 <span>Asset type: {asset.type}</span>
+                                {asset.category && (
+                                    <>
+                                        <span className="hidden sm:inline">•</span>
+                                        <span className="text-blue-600 dark:text-blue-400 font-medium">Category: {asset.category}</span>
+                                    </>
+                                )}
                                 {asset.uploader && (
                                     <>
                                         <span className="hidden sm:inline">•</span>
@@ -46,6 +52,21 @@ export function AssetPreviewDialog({ asset, onOpenChange }: AssetPreviewDialogPr
                                     </>
                                 )}
                             </div>
+                            {asset.tags && asset.tags.length > 0 && (
+                                <div className="flex flex-wrap gap-1.5 mt-1">
+                                    {asset.tags.map((tag, index) => (
+                                        <Badge key={index} variant="outline" className="text-[10px] px-2 py-0.5">
+                                            {tag}
+                                        </Badge>
+                                    ))}
+                                </div>
+                            )}
+                            {asset.ai_summary && (
+                                <div className="mt-2 p-3 bg-muted rounded-md border-l-2 border-primary">
+                                    <p className="font-medium text-xs sm:text-sm mb-1">AI Summary:</p>
+                                    <p className="text-xs sm:text-sm text-foreground">{asset.ai_summary}</p>
+                                </div>
+                            )}
                             <span>
                                 Uploaded {formatDistanceToNow(new Date(asset.created_at), { addSuffix: true })}
                             </span>

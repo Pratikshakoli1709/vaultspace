@@ -35,14 +35,22 @@ function UserDashboardPageContent() {
     useEffect(() => {
       if (!isLoading) {
         if (!supabaseUser) {
-          console.log('No supabaseUser, redirecting to login');
+          console.log('UserDashboard - No supabaseUser, redirecting to login');
           router.push('/login');
-        } else if (supabaseUser.role === 'admin') {
-          console.log('User is admin, redirecting to adminDashboard');
-          router.push('/adminDashboard');
         } else {
-          console.log('User is regular user, setting current user:', supabaseUser.email);
-          setCurrentUser(supabaseUser);
+          console.log('UserDashboard - User loaded:', {
+            email: supabaseUser.email,
+            role: supabaseUser.role,
+            id: supabaseUser.id,
+          });
+          
+          if (supabaseUser.role === 'admin') {
+            console.log('UserDashboard - User is admin, redirecting to adminDashboard');
+            router.push('/adminDashboard');
+          } else {
+            console.log('UserDashboard - User is regular user, setting current user');
+            setCurrentUser(supabaseUser);
+          }
         }
       }
     }, [supabaseUser, isLoading, router]);
@@ -51,51 +59,144 @@ function UserDashboardPageContent() {
     async (userId: string) => {
       setIsAssetsLoading(true);
 
-      const { data, error } = await supabase
-        .from('data_items')
-        .select(
-          `
-            id,
-            title,
-            type,
-            file_url,
-            link_url,
-            text_content,
-            storage_path,
-            created_by,
-            updated_by,
-            created_at,
-            updated_at,
-            profiles:created_by (
+      try {
+        // Fetch files from API
+        const response = await fetch(`/api/files?userId=${userId}`);
+        
+        // Check if response is OK and is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          // Fallback to direct Supabase query if API returns HTML (error page)
+          console.warn('API returned non-JSON response, falling back to direct database query');
+          const { data, error } = await supabase
+            .from('data_items')
+            .select(`
               id,
-              full_name,
-              email,
-              avatar_url,
-              role,
-              created_at
-            ),
-            asset_shares (
-              user_id
-            )
-          `,
-        )
-        .order('updated_at', { ascending: false })
-        .order('created_at', { ascending: false });
+              title,
+              type,
+              file_url,
+              link_url,
+              text_content,
+              storage_path,
+              created_by,
+              updated_by,
+              created_at,
+              updated_at,
+              folder_id,
+              visibility,
+              team_id,
+              allowed_users,
+              profiles:created_by (
+                id,
+                full_name,
+                email,
+                avatar_url,
+                role
+              )
+            `)
+            .order('updated_at', { ascending: false })
+            .order('created_at', { ascending: false });
 
-      if (error) {
+          if (error) {
+            throw error;
+          }
+
+          // Get starred items for this user
+          let starredFileIds: string[] = [];
+          try {
+            const { data: starredItems } = await supabase
+              .from('starred_items')
+              .select('item_id')
+              .eq('user_id', userId)
+              .eq('item_type', 'file');
+            starredFileIds = (starredItems || []).map((item: any) => item.item_id);
+          } catch (starredError) {
+            // Table might not exist - continue
+          }
+
+          const mapped = (data || []).map((file: any) => {
+            const enriched = mapRowToAsset(file);
+            enriched.isStarred = enriched.is_starred || starredFileIds.includes(enriched.id);
+            enriched.is_starred = enriched.isStarred;
+            return enriched;
+          });
+
+          const unique = Array.from(new Map(mapped.map((item: any) => [item.id, item])).values()).map(
+            (item) => (currentUser && item.created_by === currentUser.id ? { ...item, uploader: currentUser } : item),
+          );
+          setUserAssets(unique);
+          return;
+        }
+
+        const data = await response.json();
+
+        if (data.success && data.files) {
+          const unique = Array.from(new Map(data.files.map((item: any) => [item.id, item])).values()).map(
+            (item) => (currentUser && item.created_by === currentUser.id ? { ...item, uploader: currentUser } : item),
+          );
+          setUserAssets(unique);
+        } else {
+          console.error('Failed to load files:', data.error);
+          toast({
+            variant: 'destructive',
+            title: 'Unable to load files',
+            description: data.error || 'Failed to load files',
+          });
+          setUserAssets([]);
+        }
+      } catch (error: any) {
         console.error('Failed to load assets for user', error);
+        
+        // Try fallback to direct Supabase query
+        try {
+          console.log('Attempting fallback to direct Supabase query...');
+          const { data, error: dbError } = await supabase
+            .from('data_items')
+            .select(`
+              id,
+              title,
+              type,
+              file_url,
+              link_url,
+              text_content,
+              storage_path,
+              created_by,
+              updated_by,
+              created_at,
+              updated_at,
+              folder_id,
+              visibility,
+              team_id,
+              allowed_users,
+              profiles:created_by (
+                id,
+                full_name,
+                email,
+                avatar_url,
+                role
+              )
+            `)
+            .order('updated_at', { ascending: false })
+            .order('created_at', { ascending: false });
+
+          if (!dbError && data) {
+            const mapped = (data || []).map(mapRowToAsset);
+            const unique = Array.from(new Map(mapped.map((item: any) => [item.id, item])).values()).map(
+              (item) => (currentUser && item.created_by === currentUser.id ? { ...item, uploader: currentUser } : item),
+            );
+            setUserAssets(unique);
+            return;
+          }
+        } catch (fallbackError) {
+          console.error('Fallback also failed:', fallbackError);
+        }
+
         toast({
           variant: 'destructive',
           title: 'Unable to load assets',
-          description: error.message,
+          description: error?.message || 'Failed to load files',
         });
         setUserAssets([]);
-      } else {
-        const mapped = (data ?? []).map(mapRowToAsset);
-        const unique = Array.from(new Map(mapped.map((item) => [item.id, item])).values()).map(
-          (item) => (currentUser && item.created_by === currentUser.id ? { ...item, uploader: currentUser } : item),
-        );
-        setUserAssets(unique);
       }
 
       setIsAssetsLoading(false);
@@ -172,16 +273,27 @@ function UserDashboardPageContent() {
   );
 
   const handleAssetCreated = useCallback((asset: EnrichedDataItem) => {
-    setUserAssets((prev) => [asset, ...prev]);
-  }, []);
+    // Refresh from database to get complete data
+    if (supabaseUser?.id) {
+      void fetchAssets(supabaseUser.id);
+    } else {
+      setUserAssets((prev) => [asset, ...prev]);
+    }
+  }, [supabaseUser?.id, fetchAssets]);
 
   const handleAssetDeleted = useCallback((assetId: string) => {
     setUserAssets((prev) => prev.filter((asset) => asset.id !== assetId));
   }, []);
 
-  const handleAssetUpdated = useCallback((updatedAsset: EnrichedDataItem) => {
-    setUserAssets((prev) => prev.map((asset) => (asset.id === updatedAsset.id ? updatedAsset : asset)));
+  const handleAssetUpdated = useCallback((asset: EnrichedDataItem) => {
+    // Update the asset in the local state - merge to preserve all fields
+    setUserAssets((prev) =>
+      prev.map((a) => (a.id === asset.id ? { ...a, ...asset } : a))
+    );
   }, []);
+
+  // Removed files-refresh event listener - we use optimistic updates instead
+  // This prevents page refresh when starring files
 
   if (isLoading || isAssetsLoading || !currentUser) {
       return <div>Loading...</div>;

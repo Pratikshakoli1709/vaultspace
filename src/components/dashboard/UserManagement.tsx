@@ -95,50 +95,50 @@ export function UserManagement({ currentUser, users, onUserRoleUpdated }: UserMa
 
   return (
     <div className="dashboard-center w-full">
-      <Card>
+    <Card>
       <CardHeader>
         <CardTitle className="text-lg sm:text-xl">User Management</CardTitle>
         <CardDescription className="text-sm">Manage user roles and permissions for VaultSpace.</CardDescription>
       </CardHeader>
       <CardContent className="overflow-x-auto p-0 sm:p-6">
         <div className="w-full min-w-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
+        <Table>
+          <TableHeader>
+            <TableRow>
                 <TableHead className="text-xs sm:text-sm">User</TableHead>
                 <TableHead className="text-right text-xs sm:text-sm">Admin</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id}>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {users.map((user) => (
+              <TableRow key={user.id}>
                   <TableCell className="min-w-0 sm:min-w-[150px]">
                     <div className="flex items-center gap-2 sm:gap-3">
                       <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
-                        <AvatarImage src={user.avatarUrl} />
+                      <AvatarImage src={user.avatarUrl} />
                         <AvatarFallback className="text-xs sm:text-sm">{user.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
+                    </Avatar>
                       <span className="font-medium text-sm sm:text-base truncate flex-1 min-w-0">{user.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Label htmlFor={`admin-switch-${user.id}`} className="sr-only">Admin</Label>
-                      <Switch
-                        id={`admin-switch-${user.id}`}
-                        checked={user.role === 'admin'}
-                        disabled={!canManageAdmins || pendingUserId === user.id}
-                        onCheckedChange={(checked) => {
-                          void handleRoleChange(user, checked ? 'admin' : 'user');
-                        }}
-                        aria-label={`Toggle admin role for ${user.name}`}
-                      />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex items-center justify-end gap-2">
+                    <Label htmlFor={`admin-switch-${user.id}`} className="sr-only">Admin</Label>
+                    <Switch
+                      id={`admin-switch-${user.id}`}
+                      checked={user.role === 'admin'}
+                      disabled={!canManageAdmins || pendingUserId === user.id}
+                      onCheckedChange={(checked) => {
+                        void handleRoleChange(user, checked ? 'admin' : 'user');
+                      }}
+                      aria-label={`Toggle admin role for ${user.name}`}
+                    />
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
         </div>
       </CardContent>
       <CardFooter className="border-t px-4 sm:px-6 py-3 sm:py-4">

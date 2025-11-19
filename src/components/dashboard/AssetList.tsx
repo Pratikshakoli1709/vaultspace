@@ -140,85 +140,85 @@ export function AssetList({ assets, currentUser, onAssetDeleted, onAssetUpdated 
   return (
     <div className="dashboard-center w-full">
       <div className="min-w-full">
-        <Table>
-          <TableHeader>
-            <TableRow>
+      <Table>
+        <TableHeader>
+          <TableRow>
               <TableHead className="text-xs sm:text-sm">Name</TableHead>
               <TableHead className="hidden md:table-cell text-xs sm:text-sm">Uploader</TableHead>
               <TableHead className="hidden lg:table-cell text-xs sm:text-sm">Last Updated</TableHead>
               <TableHead className="text-right text-xs sm:text-sm">
-                <span className="sr-only">Actions</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {assets.map((asset) => (
-              <TableRow key={asset.id} className="cursor-pointer" onClick={() => (asset.type === 'image' || asset.type === 'document') && setPreviewingAsset(asset)}>
+              <span className="sr-only">Actions</span>
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {assets.map((asset) => (
+            <TableRow key={asset.id} className="cursor-pointer" onClick={() => (asset.type === 'image' || asset.type === 'document') && setPreviewingAsset(asset)}>
                 <TableCell className="min-w-0 sm:min-w-[150px]">
                   <div className="flex items-center gap-2 sm:gap-3">
                     <AssetTypeIcon type={asset.type} className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground flex-shrink-0" />
                     <div className="flex flex-col min-w-0 flex-1">
                         <span className="font-medium text-sm sm:text-base truncate">{asset.title}</span>
                         <Badge variant="outline" className="w-fit mt-1 text-xs">{asset.type}</Badge>
-                    </div>
                   </div>
-                </TableCell>
-                <TableCell className="hidden md:table-cell">
-                  <div className="flex items-center gap-2">
+                </div>
+              </TableCell>
+              <TableCell className="hidden md:table-cell">
+                <div className="flex items-center gap-2">
                     <Avatar className="h-5 w-5 sm:h-6 sm:w-6">
-                      <AvatarImage src={asset.uploader?.avatarUrl} />
+                    <AvatarImage src={asset.uploader?.avatarUrl} />
                       <AvatarFallback className="text-xs">{asset.uploader?.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
+                  </Avatar>
                     <span className="text-sm truncate">{asset.uploader?.name}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="hidden lg:table-cell">
-                  <div className="flex flex-col">
+                </div>
+              </TableCell>
+              <TableCell className="hidden lg:table-cell">
+                <div className="flex flex-col">
                     <span className="text-xs sm:text-sm font-medium">
-                      {format(new Date(asset.updated_at), 'MMM d, yyyy')}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {format(new Date(asset.updated_at), 'h:mm a')}
-                    </span>
-                  </div>
-                </TableCell>
+                    {format(new Date(asset.updated_at), 'MMM d, yyyy')}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {format(new Date(asset.updated_at), 'h:mm a')}
+                  </span>
+                </div>
+              </TableCell>
                 <TableCell className="text-right">
-                  <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
+                <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
                         <Button aria-haspopup="true" size="icon" variant="ghost" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="sr-only">Toggle menu</span>
+                      </Button>
+                    </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48">
-                        {asset.type === 'key' && <DropdownMenuItem onSelect={() => handleCopy(asset)}><Copy className="mr-2 h-4 w-4"/>Copy Key</DropdownMenuItem>}
+                      {asset.type === 'key' && <DropdownMenuItem onSelect={() => handleCopy(asset)}><Copy className="mr-2 h-4 w-4"/>Copy Key</DropdownMenuItem>}
                         {asset.type === 'link' && asset.link_url && <DropdownMenuItem asChild><a href={asset.link_url} target="_blank" rel="noopener noreferrer" className="flex items-center"><ExternalLink className="mr-2 h-4 w-4"/>Open Link</a></DropdownMenuItem>}
-                        {(asset.type === 'image' || asset.type === 'document') && <DropdownMenuItem onSelect={() => setPreviewingAsset(asset)}><Eye className="mr-2 h-4 w-4"/>Preview</DropdownMenuItem>}
-                        
-                        {canEditAsset(asset) && (
-                          <DropdownMenuItem onSelect={() => setEditingAsset(asset)}>
-                            <Edit className="mr-2 h-4 w-4"/>
-                            Edit
-                          </DropdownMenuItem>
-                        )}
-                        {canPerformAction(asset) && (
-                            <>
-                                {canEditAsset(asset) && <DropdownMenuSeparator />}
-                                <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => setDeletingAsset(asset)}>
-                                  <Trash2 className="mr-2 h-4 w-4"/>
-                                  <span>Delete</span>
-                                </DropdownMenuItem>
-                            </>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                      {(asset.type === 'image' || asset.type === 'document') && <DropdownMenuItem onSelect={() => setPreviewingAsset(asset)}><Eye className="mr-2 h-4 w-4"/>Preview</DropdownMenuItem>}
+                      
+                      {canEditAsset(asset) && (
+                        <DropdownMenuItem onSelect={() => setEditingAsset(asset)}>
+                          <Edit className="mr-2 h-4 w-4"/>
+                          Edit
+                        </DropdownMenuItem>
+                      )}
+                      {canPerformAction(asset) && (
+                          <>
+                              {canEditAsset(asset) && <DropdownMenuSeparator />}
+                              <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => setDeletingAsset(asset)}>
+                                <Trash2 className="mr-2 h-4 w-4"/>
+                                <span>Delete</span>
+                              </DropdownMenuItem>
+                          </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
       </div>
 
       <AssetPreviewDialog asset={previewingAsset} onOpenChange={(open) => !open && setPreviewingAsset(null)} />

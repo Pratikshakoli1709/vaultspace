@@ -93,7 +93,7 @@ export function Header({
 
           {user.role === 'admin' && (
             <div className="hidden sm:block">
-              <BroadcastDialog currentUser={user} targets={broadcastTargets} />
+            <BroadcastDialog currentUser={user} targets={broadcastTargets} />
             </div>
           )}
 

@@ -178,13 +178,28 @@ export async function uploadAssetClient(params: UploadAssetParams): Promise<Uplo
     console.warn('Activity logging failed (non-critical):', err);
   });
 
-  // Notify admins if a key was uploaded
-  if (type === 'key') {
+  // Notify admins when any file is uploaded (if user is not admin)
+  if (currentUser.role !== 'admin') {
     const { notifyAllAdmins } = await import('./notifications');
     await notifyAllAdmins(
-      `API Key "${trimmedTitle}" has been uploaded by ${currentUser.name || currentUser.email}`,
+      `File "${trimmedTitle}" (${type}) has been uploaded by ${currentUser.name || currentUser.email}`,
       currentUser.id,
     );
+  }
+
+  // Trigger AI processing in the background (non-blocking)
+  if (textContent || type === 'document' || type === 'image') {
+    void fetch('/api/ai/process-upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fileId: data.id,
+        textContent: textContent || null,
+        fileType: type,
+      }),
+    }).catch((error) => {
+      console.warn('AI processing failed (non-critical):', error);
+    });
   }
 
   return { success: true, asset: mapRowToAsset(data) };
@@ -211,6 +226,12 @@ export type UpdateAssetResult =
 
 export async function updateAssetClient(params: UpdateAssetParams): Promise<UpdateAssetResult> {
   const { assetId, title, textContent, linkUrl, currentUser } = params;
+
+  // Validate assetId is provided
+  if (!assetId) {
+    console.error('Failed to update asset: assetId is required');
+    return { success: false, error: 'Asset ID is required.' };
+  }
 
   const updateData: Record<string, unknown> = {
     updated_by: currentUser.id,
@@ -264,9 +285,14 @@ export async function updateAssetClient(params: UpdateAssetParams): Promise<Upda
     )
     .maybeSingle<DataItemRow>();
 
-  if (error || !data) {
-    console.error('Failed to update asset', error);
-    return { success: false, error: error?.message ?? 'Unable to update asset.' };
+  if (error) {
+    console.error('Failed to update asset', assetId, error);
+    return { success: false, error: error.message ?? 'Unable to update asset.' };
+  }
+
+  if (!data) {
+    console.error('Failed to update asset: No data returned for assetId', assetId);
+    return { success: false, error: 'Asset not found or you do not have permission to update it.' };
   }
 
   const mappedAsset = mapRowToAsset(data);
@@ -281,11 +307,11 @@ export async function updateAssetClient(params: UpdateAssetParams): Promise<Upda
     console.warn('Activity logging failed (non-critical):', err);
   });
 
-  // Notify admins if a key was edited
-  if (data.type === 'key') {
+  // Notify admins when any file is edited (if user is not admin)
+  if (currentUser.role !== 'admin') {
     const { notifyAllAdmins } = await import('./notifications');
     await notifyAllAdmins(
-      `API Key "${data.title}" has been edited by ${currentUser.name || currentUser.email}`,
+      `File "${data.title}" (${data.type}) has been edited by ${currentUser.name || currentUser.email}`,
       currentUser.id,
     );
   }
@@ -329,14 +355,12 @@ export async function deleteAssetClient({
     }
   }
 
-  // Notify admins if a key was deleted
-  if (assetRow.type === 'key') {
+  // Notify admins when any file is deleted
     const { notifyAllAdmins } = await import('./notifications');
     await notifyAllAdmins(
-      `API Key "${assetRow.title}" has been deleted by ${currentUser.name || currentUser.email}`,
+    `File "${assetRow.title}" (${assetRow.type}) has been deleted by ${currentUser.name || currentUser.email}`,
       currentUser.id,
     );
-  }
 
   return { success: true };
 }

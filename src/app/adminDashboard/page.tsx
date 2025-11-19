@@ -176,38 +176,38 @@ function AdminDashboardPageContent() {
         <AppSidebar user={currentUser!} />
         <SidebarInset className="flex flex-grow flex-col bg-background main-layout-content-column">
           <div className="dashboard-dynamic-margin">
-            <Header
-              user={currentUser!}
-              notifications={notifications}
-              onAssetCreated={handleAssetCreated}
-              onUserUpdate={setCurrentUser}
-              searchTerm={searchTerm}
-              onSearchChange={setSearchTerm}
-              shareableUsers={shareableUsers}
-              broadcastTargets={broadcastTargets}
-            />
+          <Header
+            user={currentUser!}
+            notifications={notifications}
+            onAssetCreated={handleAssetCreated}
+            onUserUpdate={setCurrentUser}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            shareableUsers={shareableUsers}
+            broadcastTargets={broadcastTargets}
+          />
             <main className="w-full overflow-x-hidden">
               <div className="w-full px-6 xl:px-10 2xl:px-16">
                 <div className="w-full pt-4 sm:pt-6 pb-4 sm:pb-6 flex flex-col space-y-4 sm:space-y-6">
                   <div>
                     <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Admin Dashboard</h1>
                     <p className="text-sm sm:text-base text-muted-foreground mt-1">Manage users and monitor activity</p>
-                  </div>
-                  <div className="w-full">
-                    <ControlledDashboard
-                    currentUser={currentUser!}
-                    users={allUsers}
-                    assets={filteredAssets}
-                    activityLogs={activityLogs}
-                    onAssetDeleted={handleAssetDeleted}
-                    onAssetUpdated={handleAssetUpdated}
-                    onUserRoleUpdated={handleUserRoleUpdated}
-                    onUserCreated={handleUserCreated}
-                    />
-                  </div>
-                </div>
               </div>
-            </main>
+              <div className="w-full">
+                <ControlledDashboard
+                currentUser={currentUser!}
+                users={allUsers}
+                assets={filteredAssets}
+                activityLogs={activityLogs}
+                onAssetDeleted={handleAssetDeleted}
+                onAssetUpdated={handleAssetUpdated}
+                onUserRoleUpdated={handleUserRoleUpdated}
+                onUserCreated={handleUserCreated}
+              />
+                  </div>
+              </div>
+            </div>
+          </main>
           </div>
         </SidebarInset>
       </div>

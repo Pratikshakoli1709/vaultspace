@@ -72,43 +72,75 @@ function LoginForm() {
                     .eq('id', data.user?.id)
                     .maybeSingle();
 
-                // If profile doesn't exist, create it
+                // Determine role first
+                const isInAllowlist = normalizedAllowlist.includes(normalizedEmail);
+                const determinedRole: 'admin' | 'user' = isInAllowlist ? 'admin' : 'user';
+                
+                console.log('Login - Role determination:', {
+                  email: normalizedEmail,
+                  isInAllowlist,
+                  determinedRole,
+                  hasProfile: !!profileData,
+                  profileRole: profileData?.role,
+                });
+
+                // If profile doesn't exist, create it with correct role
                 if (profileError || !profileData) {
-                  console.log('Profile not found, creating one...', profileError);
-                  const role = normalizedAllowlist.includes(normalizedEmail) ? 'admin' : 'user';
-                  const { error: upsertError } = await supabase
+                  console.log('Profile not found, creating one with role:', determinedRole);
+                  
+                  const { data: upsertedData, error: upsertError } = await supabase
                     .from('profiles')
                     .upsert(
                       {
                         id: data.user.id,
                         email: normalizedEmail,
-                        full_name: data.user.user_metadata?.full_name || null,
+                        full_name: data.user.user_metadata?.full_name || normalizedEmail.split('@')[0] || 'User',
                         avatar_url: `https://i.pravatar.cc/150?u=${encodeURIComponent(normalizedEmail)}`,
-                        role,
+                        role: determinedRole, // Explicitly set the role
                       },
                       { onConflict: 'id' },
-                    );
+                    )
+                    .select('full_name, role')
+                    .single();
 
                   if (upsertError) {
                     console.error('Failed to create profile:', upsertError);
+                    // Fallback: use determined role
+                    profileData = { 
+                      full_name: normalizedEmail.split('@')[0] || 'User', 
+                      role: determinedRole 
+                    };
                   } else {
-                    // Fetch the newly created profile
-                    const { data: newProfileData } = await supabase
+                    // Use the upserted data
+                    profileData = upsertedData;
+                    console.log('Profile created successfully:', profileData);
+                  }
+                } else {
+                  // Profile exists - check if role needs updating
+                  if (profileData.role !== determinedRole) {
+                    console.log(`Profile role mismatch. Updating from '${profileData.role}' to '${determinedRole}'`);
+                    const { error: updateError } = await supabase
                       .from('profiles')
-                      .select('full_name, role')
-                      .eq('id', data.user?.id)
-                      .maybeSingle();
-                    profileData = newProfileData;
+                      .update({ role: determinedRole })
+                      .eq('id', data.user.id);
+                    
+                    if (updateError) {
+                      console.error('Failed to update profile role:', updateError);
+                    } else {
+                      profileData.role = determinedRole;
+                      console.log('Profile role updated successfully');
                   }
                 }
-
-                let userRole = profileData?.role ?? 'user';
-
-                if (profileData?.role === 'admin') {
-                  userRole = 'admin';
-                } else if (normalizedAllowlist.includes(normalizedEmail)) {
-                  userRole = 'admin';
                 }
+
+                // Final role assignment - use profile role (which should now be correct)
+                const userRole: 'admin' | 'user' = (profileData?.role === 'admin') ? 'admin' : 'user';
+                
+                console.log('Final role assignment:', {
+                  email: normalizedEmail,
+                  userRole,
+                  profileRole: profileData?.role,
+                });
 
                 const userName =
                   profileData?.full_name ||
@@ -127,12 +159,17 @@ function LoginForm() {
                   searchParams.get('redirectTo') ||
                   (userRole === 'admin' ? '/adminDashboard' : '/userDashboard');
 
-                console.log('Redirecting to:', redirectTarget);
+                console.log('Redirecting to:', redirectTarget, 'for user with role:', userRole);
                 
-                // Wait a bit for session to be fully established
-                await new Promise((resolve) => setTimeout(resolve, 500));
+                // Wait for session and profile to be fully established
+                // This ensures the SupabaseProvider can read the correct role
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+                
+                // Force a refresh of the auth state
+                await supabase.auth.getSession();
                 
                 router.push(redirectTarget);
+                router.refresh(); // Force Next.js to refresh the page
             } catch (profileFetchError) {
                 console.error('Profile fetch error:', profileFetchError);
                 // Fallback to user role if profile fetch fails
@@ -176,7 +213,7 @@ function LoginForm() {
         }
     }
 
-    return (
+  return (
         <form onSubmit={handleLogin} className="grid gap-3 sm:gap-4">
             <div className="grid gap-1.5 sm:gap-2">
               <Label htmlFor="email" className="text-sm sm:text-base">Email</Label>
@@ -193,7 +230,7 @@ function LoginForm() {
                 </Link>
               </div>
               <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} className="text-sm sm:text-base h-9 sm:h-10" />
-            </div>
+          </div>
             <Button type="submit" className="w-full h-9 sm:h-10 text-sm sm:text-base" disabled={isLoading}>
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Login"}
             </Button>
@@ -205,19 +242,19 @@ function LoginFormFallback() {
     return (
         <div className="grid gap-4">
             <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email</Label>
                 <Input id="email" type="email" placeholder="m@example.com" disabled />
             </div>
             <div className="grid gap-2">
-                <div className="flex items-center">
-                    <Label htmlFor="password">Password</Label>
-                    <Link
-                        href="#"
-                        className="ml-auto inline-block text-sm underline"
-                    >
-                        Forgot your password?
-                    </Link>
-                </div>
+              <div className="flex items-center">
+                <Label htmlFor="password">Password</Label>
+                <Link
+                  href="#"
+                  className="ml-auto inline-block text-sm underline"
+                >
+                  Forgot your password?
+                </Link>
+              </div>
                 <Input id="password" type="password" disabled />
             </div>
             <Button type="submit" className="w-full" disabled>

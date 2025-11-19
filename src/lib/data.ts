@@ -65,6 +65,17 @@ export const getRealDataItems = async (): Promise<EnrichedDataItem[]> => {
         updated_by,
         created_at,
         updated_at,
+        visibility,
+        team_id,
+        allowed_users,
+        folder_id,
+        is_starred,
+        extracted_text,
+        raw_text,
+        embedding,
+        category,
+        tags,
+        ai_summary,
         profiles:created_by (
           ${profilesSelect}
         )

@@ -12,7 +12,7 @@ import {
     SidebarMenuButton,
 } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
-import { Home, Settings, Shield, LogOut } from "lucide-react"
+import { Home, Settings, Shield, LogOut, Sparkles } from "lucide-react"
 import { User } from "@/lib/types"
 import { Logo } from "./Logo"
 import { useRouter } from "next/navigation"
@@ -70,6 +70,14 @@ export function AppSidebar({ user }: { user: User }) {
                             <SidebarMenuButton tooltip="Settings" isActive={pathname === '/settings'}>
                                 <Settings />
                                 <span>Settings</span>
+                            </SidebarMenuButton>
+                        </Link>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <Link href="/ai-assistant">
+                            <SidebarMenuButton tooltip="AI Assistant" isActive={pathname === '/ai-assistant'}>
+                                <Sparkles />
+                                <span>AI Assistant</span>
                             </SidebarMenuButton>
                         </Link>
                     </SidebarMenuItem>

@@ -49,7 +49,14 @@ export function EditAssetDialog({
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!asset) return;
+    if (!asset || !asset.id) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Asset ID is missing. Please refresh and try again.",
+      });
+      return;
+    }
 
     setIsSubmitting(true);
     const result = await updateAssetClient({
@@ -74,6 +81,8 @@ export function EditAssetDialog({
       title: "Asset Updated",
       description: `"${result.asset.title}" has been updated.`,
     });
+
+    // Notification is handled in updateAssetClient service
 
     onAssetUpdated(result.asset);
     onOpenChange(false);

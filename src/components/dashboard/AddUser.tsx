@@ -93,7 +93,7 @@ export function AddUser({ currentUser, onUserCreated }: AddUserProps) {
 
   return (
     <div className="dashboard-center w-full">
-      <Card>
+    <Card>
       <CardHeader>
         <CardTitle className="text-lg sm:text-xl">Add New User</CardTitle>
         <CardDescription className="text-sm">
