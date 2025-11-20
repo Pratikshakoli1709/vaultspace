@@ -5,6 +5,7 @@ import type { User, EnrichedDataItem, EnrichedActivityLog } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FolderView } from './FolderView';
 import { FolderTree } from './FolderTree';
+import { TeamsView } from './TeamsView';
 import { Activity, Archive, Users } from 'lucide-react';
 import { useFolderStore } from '@/stores/folder-store';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -15,6 +16,7 @@ import { cn } from '@/lib/utils';
 import type { FolderWithChildren } from '@/lib/types';
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface DashboardWithFoldersProps {
   currentUser: User;
@@ -315,6 +317,8 @@ export function DashboardWithFolders({
     }
   };
   
+  const [activeTab, setActiveTab] = useState<'files' | 'teams'>('files');
+
   return (
     <div className="dashboard-center space-y-4 sm:space-y-6 w-full">
       {/* Stats Section */}
@@ -329,88 +333,106 @@ export function DashboardWithFolders({
         </div>
       </div>
       
-      {/* Folder System */}
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="text-lg sm:text-xl">Files & Folders</CardTitle>
-          <CardDescription className="text-sm">
-            Manage your files and folders in a Drive-like interface
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-          >
-          <div className="flex h-[calc(100vh-400px)] min-h-[600px] sm:min-h-[700px]">
-            {/* Left Sidebar - Folder Tree */}
-            <div className="hidden lg:flex w-64 xl:w-72 border-r flex-col">
-              <ScrollArea className="flex-1">
-                <div className="p-2 space-y-1">
-                  <Button
-                    variant={selectedFolderId === null ? 'secondary' : 'ghost'}
-                    className="w-full justify-start text-xs sm:text-sm"
-                    onClick={() => setSelectedFolder(null)}
-                  >
-                    <Home className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                    Home
-                  </Button>
-                  
-                  <Button
-                    variant={selectedFolderId === 'starred' ? 'secondary' : 'ghost'}
-                    className="w-full justify-start text-xs sm:text-sm"
-                    onClick={() => setSelectedFolder('starred')}
-                  >
-                    <Star className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                    Starred
-                    {starredItems.length > 0 && (
-                      <span className="ml-auto text-xs">({starredItems.length})</span>
-                    )}
-                  </Button>
-                  
-                  <Button
-                    variant={selectedFolderId === 'recent' ? 'secondary' : 'ghost'}
-                    className="w-full justify-start text-xs sm:text-sm"
-                    onClick={() => setSelectedFolder('recent')}
-                  >
-                    <Clock className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                    Recent
-                    {recentFiles.length > 0 && (
-                      <span className="ml-auto text-xs">({recentFiles.length})</span>
-                    )}
-                  </Button>
-                  
-                  <Separator />
-                  
-                  <FolderTree currentUser={currentUser} />
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'files' | 'teams')} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsTrigger value="files">Files & Folders</TabsTrigger>
+          <TabsTrigger value="teams">Teams</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="files" className="mt-4">
+          {/* Folder System */}
+          <Card className="w-full">
+            <CardHeader>
+              <CardTitle className="text-lg sm:text-xl">Files & Folders</CardTitle>
+              <CardDescription className="text-sm">
+                Manage your files and folders in a Drive-like interface
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+              >
+              <div className="flex h-[calc(100vh-400px)] min-h-[600px] sm:min-h-[700px]">
+                {/* Left Sidebar - Folder Tree */}
+                <div className="hidden lg:flex w-64 xl:w-72 border-r flex-col">
+                  <ScrollArea className="flex-1">
+                    <div className="p-2 space-y-1">
+                      <Button
+                        variant={selectedFolderId === null ? 'secondary' : 'ghost'}
+                        className="w-full justify-start text-xs sm:text-sm"
+                        onClick={() => setSelectedFolder(null)}
+                      >
+                        <Home className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                        Home
+                      </Button>
+                      
+                      <Button
+                        variant={selectedFolderId === 'starred' ? 'secondary' : 'ghost'}
+                        className="w-full justify-start text-xs sm:text-sm"
+                        onClick={() => setSelectedFolder('starred')}
+                      >
+                        <Star className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                        Starred
+                        {starredItems.length > 0 && (
+                          <span className="ml-auto text-xs">({starredItems.length})</span>
+                        )}
+                      </Button>
+                      
+                      <Button
+                        variant={selectedFolderId === 'recent' ? 'secondary' : 'ghost'}
+                        className="w-full justify-start text-xs sm:text-sm"
+                        onClick={() => setSelectedFolder('recent')}
+                      >
+                        <Clock className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                        Recent
+                        {recentFiles.length > 0 && (
+                          <span className="ml-auto text-xs">({recentFiles.length})</span>
+                        )}
+                      </Button>
+                      
+                      <Separator />
+                      
+                      <FolderTree currentUser={currentUser} />
+                    </div>
+                  </ScrollArea>
                 </div>
-              </ScrollArea>
-            </div>
-            
-            {/* Main Content - Folder View */}
-            <div className="flex-1 flex flex-col min-w-0">
-              <FolderView
-                files={assets}
-                currentUser={currentUser}
-                onFileUpdated={handleFileUpdated}
-                onFileDeleted={handleFileDeleted}
-                  externalDndContext={true}
-              />
-            </div>
-          </div>
-            
-            <DragOverlay>
-              {activeId && (
-                <div className="opacity-50">
-                  {/* Drag preview - can be customized */}
+                
+                {/* Main Content - Folder View */}
+                <div className="flex-1 flex flex-col min-w-0">
+                  <FolderView
+                    files={assets}
+                    currentUser={currentUser}
+                    onFileUpdated={handleFileUpdated}
+                    onFileDeleted={handleFileDeleted}
+                    externalDndContext={true}
+                  />
                 </div>
-              )}
-            </DragOverlay>
-          </DndContext>
-        </CardContent>
-      </Card>
+              </div>
+                
+                <DragOverlay>
+                  {activeId && (
+                    <div className="opacity-50">
+                      {/* Drag preview - can be customized */}
+                    </div>
+                  )}
+                </DragOverlay>
+              </DndContext>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="teams" className="mt-4">
+          <TeamsView
+            currentUser={currentUser}
+            onAssetCreated={onAssetUpdated}
+            onAssetDeleted={onAssetDeleted}
+            onAssetUpdated={onAssetUpdated}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

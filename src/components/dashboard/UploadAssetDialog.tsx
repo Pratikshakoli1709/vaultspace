@@ -32,6 +32,7 @@ interface UploadAssetDialogProps {
   user: User;
   onAssetCreated: (asset: EnrichedDataItem) => void;
   availableUsers?: User[];
+  teamId?: string | null;
 }
 
 export function UploadAssetDialog({
@@ -39,6 +40,7 @@ export function UploadAssetDialog({
   user,
   onAssetCreated,
   availableUsers = [],
+  teamId,
 }: UploadAssetDialogProps) {
   const [assetType, setAssetType] = useState<DataItemType>("link");
   const [open, setOpen] = useState(false);
@@ -90,6 +92,7 @@ export function UploadAssetDialog({
       file,
       currentUser: user,
       sharedWithUserIds: sharedWith,
+      teamId: teamId || null,
     });
     setIsSubmitting(false);
 

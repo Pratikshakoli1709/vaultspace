@@ -23,6 +23,10 @@ import { Loader2, FileText, FileDown, Calendar, Clock } from 'lucide-react';
 import { exportToCSV, exportToPDF, prepareExportData, type ExportFormat } from '@/lib/export-utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 
 function SettingsPageContent() {
@@ -42,7 +46,9 @@ function SettingsPageContent() {
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [isExportingData, setIsExportingData] = useState(false);
   const [exportFormat, setExportFormat] = useState<ExportFormat>('pdf');
-  const [dateRange, setDateRange] = useState<'all' | '1' | '2' | '3' | '4' | '5' | '6'>('all');
+  const [dateRange, setDateRange] = useState<'all' | 'custom'>('all');
+  const [customDate, setCustomDate] = useState<Date | undefined>(undefined);
+  const [dateDirection, setDateDirection] = useState<'before' | 'after'>('after');
 
   useEffect(() => {
     if (!isLoading) {
@@ -138,21 +144,44 @@ function SettingsPageContent() {
       
       // Determine date filter based on selected range
       let dateFilter: (date: Date | string | null | undefined) => boolean;
+      let startDate: Date;
       
       if (dateRange === 'all') {
         // No date filtering - export all data
         dateFilter = () => true;
-      } else {
-        // Calculate the start date based on number of months ago
-        const monthsAgo = parseInt(dateRange, 10);
-        const startDate = new Date(now.getFullYear(), now.getMonth() - monthsAgo, now.getDate(), 0, 0, 0, 0);
+        startDate = new Date(0); // Beginning of time
+      } else if (dateRange === 'custom') {
+        // Use custom date if selected
+        if (!customDate) {
+          toast({
+            title: 'Date Required',
+            description: 'Please select a custom date for export.',
+            variant: 'destructive',
+          });
+          setIsExportingData(false);
+          return;
+        }
+        const selectedDate = new Date(customDate);
+        selectedDate.setHours(23, 59, 59, 999); // End of the selected day for "before"
+        const selectedDateStart = new Date(customDate);
+        selectedDateStart.setHours(0, 0, 0, 0); // Start of the selected day for "after"
         
-        // Filter: from X months ago until now
-        dateFilter = (date) => {
-          if (!date) return false;
-          const itemDate = new Date(date);
-          return itemDate >= startDate && itemDate <= now;
-        };
+        // Filter based on direction: before or after the selected date
+        if (dateDirection === 'before') {
+          // Filter: from beginning until selected date (inclusive)
+          dateFilter = (date) => {
+            if (!date) return false;
+            const itemDate = new Date(date);
+            return itemDate <= selectedDate;
+          };
+        } else {
+          // Filter: from selected date until now
+          dateFilter = (date) => {
+            if (!date) return false;
+            const itemDate = new Date(date);
+            return itemDate >= selectedDateStart && itemDate <= now;
+          };
+        }
       }
 
       const [allAssets, allActivityLogs] = await Promise.all([
@@ -168,7 +197,11 @@ function SettingsPageContent() {
       ]);
 
       // Apply date filters
-      const assets = allAssets.filter((item) => dateFilter(item.created_at));
+      // Include assets that were created OR updated in the date range
+      const assets = allAssets.filter((item) => 
+        dateFilter(item.created_at) || dateFilter(item.updated_at)
+      );
+      // Include activity logs that happened in the date range
       const activityLogs = allActivityLogs.filter((log) => dateFilter(log.timestamp));
 
       const exportData = prepareExportData(assets, activityLogs, currentUser);
@@ -182,7 +215,11 @@ function SettingsPageContent() {
 
       const rangeText = 
         dateRange === 'all' ? 'All Data' :
-        `${dateRange} month${dateRange === '1' ? '' : 's'} ago to today`;
+        dateRange === 'custom' && customDate
+          ? dateDirection === 'before'
+            ? `All data before ${format(customDate, 'MMM d, yyyy')}`
+            : `Data from ${format(customDate, 'MMM d, yyyy')} to today`
+          : 'Custom date range';
       
       toast({
         title: 'Data Exported',
@@ -296,11 +333,12 @@ function SettingsPageContent() {
                           {/* Date Range Selection */}
                           <div className="mb-4 space-y-3">
                             <Label className="text-xs sm:text-sm font-medium">Select Date Range</Label>
-                            <RadioGroup value={dateRange === 'all' ? 'all' : 'months'} onValueChange={(value) => {
+                            <RadioGroup value={dateRange} onValueChange={(value) => {
                               if (value === 'all') {
                                 setDateRange('all');
-                              } else if (dateRange === 'all') {
-                                setDateRange('1');
+                                setCustomDate(undefined);
+                              } else if (value === 'custom') {
+                                setDateRange('custom');
                               }
                             }} className="space-y-2">
                               <div className="flex items-center space-x-2">
@@ -311,59 +349,80 @@ function SettingsPageContent() {
                                 </Label>
                               </div>
                               <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="months" id="range-months" />
-                                <Label htmlFor="range-months" className="text-xs sm:text-sm font-medium cursor-pointer">
-                                  Export from specific time:
+                                <RadioGroupItem value="custom" id="range-custom" />
+                                <Label htmlFor="range-custom" className="text-xs sm:text-sm font-medium cursor-pointer">
+                                  Export from custom date:
                                 </Label>
                               </div>
                             </RadioGroup>
-                            {dateRange !== 'all' && (
-                              <div className="ml-6 mt-2">
-                                <Select value={dateRange} onValueChange={(value) => setDateRange(value as '1' | '2' | '3' | '4' | '5' | '6')}>
-                                  <SelectTrigger className="w-full sm:w-[200px] text-sm sm:text-base h-9 sm:h-10">
-                                    <SelectValue placeholder="Select months" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="1">
-                                      <div className="flex items-center gap-2">
-                                        <Calendar className="h-4 w-4" />
-                                        <span>1 month ago</span>
-                                      </div>
-                                    </SelectItem>
-                                    <SelectItem value="2">
-                                      <div className="flex items-center gap-2">
-                                        <Calendar className="h-4 w-4" />
-                                        <span>2 months ago</span>
-                                      </div>
-                                    </SelectItem>
-                                    <SelectItem value="3">
-                                      <div className="flex items-center gap-2">
-                                        <Calendar className="h-4 w-4" />
-                                        <span>3 months ago</span>
-                                      </div>
-                                    </SelectItem>
-                                    <SelectItem value="4">
-                                      <div className="flex items-center gap-2">
-                                        <Calendar className="h-4 w-4" />
-                                        <span>4 months ago</span>
-                                      </div>
-                                    </SelectItem>
-                                    <SelectItem value="5">
-                                      <div className="flex items-center gap-2">
-                                        <Calendar className="h-4 w-4" />
-                                        <span>5 months ago</span>
-                                      </div>
-                                    </SelectItem>
-                                    <SelectItem value="6">
-                                      <div className="flex items-center gap-2">
-                                        <Calendar className="h-4 w-4" />
-                                        <span>6 months ago</span>
-                                      </div>
-                                    </SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <p className="text-xs text-muted-foreground mt-2">
-                                  Exporting data from {dateRange} month{dateRange === '1' ? '' : 's'} ago to today
+                            {dateRange === 'custom' && (
+                              <div className="ml-6 mt-2 space-y-3">
+                                <div className="space-y-2">
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        className={cn(
+                                          "w-full sm:w-[280px] md:w-[320px] justify-start text-left font-normal text-sm sm:text-base h-9 sm:h-10",
+                                          !customDate && "text-muted-foreground"
+                                        )}
+                                      >
+                                        <Calendar className="mr-2 h-4 w-4 flex-shrink-0" />
+                                        {customDate ? format(customDate, "PPP") : <span>Pick a date</span>}
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                      <CalendarComponent
+                                        mode="single"
+                                        selected={customDate}
+                                        onSelect={(date) => {
+                                          setCustomDate(date);
+                                          // Prevent selecting future dates only for "after" direction
+                                          if (date && date > new Date() && dateDirection === 'after') {
+                                            setCustomDate(undefined);
+                                            toast({
+                                              title: 'Invalid Date',
+                                              description: 'Cannot select a future date for "after" export.',
+                                              variant: 'destructive',
+                                            });
+                                          }
+                                        }}
+                                        disabled={(date) => dateDirection === 'after' && date > new Date()}
+                                        initialFocus
+                                      />
+                                    </PopoverContent>
+                                  </Popover>
+                                </div>
+                                {customDate && (
+                                  <div className="space-y-2">
+                                    <Label className="text-xs sm:text-sm font-medium">Export data:</Label>
+                                    <Select value={dateDirection} onValueChange={(value) => setDateDirection(value as 'before' | 'after')}>
+                                      <SelectTrigger className="w-full sm:w-[280px] md:w-[320px] text-sm sm:text-base h-9 sm:h-10">
+                                        <SelectValue placeholder="Select direction" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="before">
+                                          <div className="flex items-center gap-2">
+                                            <Clock className="h-4 w-4" />
+                                            <span>Before this date</span>
+                                          </div>
+                                        </SelectItem>
+                                        <SelectItem value="after">
+                                          <div className="flex items-center gap-2">
+                                            <Clock className="h-4 w-4" />
+                                            <span>After this date</span>
+                                          </div>
+                                        </SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                )}
+                                <p className="text-xs text-muted-foreground">
+                                  {customDate 
+                                    ? dateDirection === 'before'
+                                      ? `Exporting all data before ${format(customDate, 'MMM d, yyyy')}`
+                                      : `Exporting data from ${format(customDate, 'MMM d, yyyy')} to today`
+                                    : 'Please select a date to export data'}
                                 </p>
                               </div>
                             )}

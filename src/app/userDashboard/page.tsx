@@ -68,7 +68,16 @@ function UserDashboardPageContent() {
         if (!contentType || !contentType.includes('application/json')) {
           // Fallback to direct Supabase query if API returns HTML (error page)
           console.warn('API returned non-JSON response, falling back to direct database query');
-          const { data, error } = await supabase
+          
+          // Get user's team memberships for team document filtering
+          const { data: teamMemberships } = await supabase
+            .from('team_members')
+            .select('team_id')
+            .eq('user_id', userId);
+          
+          const userTeamIds = (teamMemberships || []).map((tm: any) => tm.team_id);
+          
+          let query = supabase
             .from('data_items')
             .select(`
               id,
@@ -93,7 +102,17 @@ function UserDashboardPageContent() {
                 avatar_url,
                 role
               )
-            `)
+            `);
+          
+          // Filter: show all non-team files OR team files where user is a member
+          if (userTeamIds.length > 0) {
+            query = query.or(`team_id.is.null,team_id.in.(${userTeamIds.join(',')})`);
+          } else {
+            // If user is not in any teams, only show non-team files
+            query = query.is('team_id', null);
+          }
+          
+          const { data, error } = await query
             .order('updated_at', { ascending: false })
             .order('created_at', { ascending: false });
 
@@ -150,7 +169,16 @@ function UserDashboardPageContent() {
         // Try fallback to direct Supabase query
         try {
           console.log('Attempting fallback to direct Supabase query...');
-          const { data, error: dbError } = await supabase
+          
+          // Get user's team memberships for team document filtering
+          const { data: teamMemberships } = await supabase
+            .from('team_members')
+            .select('team_id')
+            .eq('user_id', userId);
+          
+          const userTeamIds = (teamMemberships || []).map((tm: any) => tm.team_id);
+          
+          let query = supabase
             .from('data_items')
             .select(`
               id,
@@ -175,7 +203,17 @@ function UserDashboardPageContent() {
                 avatar_url,
                 role
               )
-            `)
+            `);
+          
+          // Filter: show all non-team files OR team files where user is a member
+          if (userTeamIds.length > 0) {
+            query = query.or(`team_id.is.null,team_id.in.(${userTeamIds.join(',')})`);
+          } else {
+            // If user is not in any teams, only show non-team files
+            query = query.is('team_id', null);
+          }
+          
+          const { data, error: dbError } = await query
             .order('updated_at', { ascending: false })
             .order('created_at', { ascending: false });
 
@@ -246,6 +284,19 @@ function UserDashboardPageContent() {
       void fetchActivity(supabaseUser.id);
     }
   }, [supabaseUser?.id, fetchAssets, fetchActivity]);
+
+  // Listen for asset refresh events (e.g., when team documents are uploaded)
+  useEffect(() => {
+    const handleAssetRefresh = () => {
+      if (supabaseUser?.id) {
+        console.log('Refreshing assets due to asset refresh event');
+        void fetchAssets(supabaseUser.id);
+      }
+    };
+
+    window.addEventListener('assets-refresh', handleAssetRefresh);
+    return () => window.removeEventListener('assets-refresh', handleAssetRefresh);
+  }, [supabaseUser?.id, fetchAssets]);
 
   useEffect(() => {
     if (!supabaseUser?.id) return;

@@ -18,36 +18,165 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch files from database - return ALL files (not filtered by userId)
-    // Users can see all files, but starred status is per-user from starred_items table
-    const { data: files, error } = await supabaseServer
-      .from('data_items')
-      .select(`
-        id,
-        title,
-        type,
-        file_url,
-        link_url,
-        text_content,
-        storage_path,
-        created_by,
-        updated_by,
-        created_at,
-        updated_at,
-        folder_id,
-        visibility,
-        team_id,
-        allowed_users,
-        profiles:created_by (
+    // Get user's team memberships
+    const { data: teamMemberships, error: teamError } = await supabaseServer
+      .from('team_members')
+      .select('team_id')
+      .eq('user_id', userId);
+    
+    if (teamError) {
+      console.warn('Error fetching team memberships:', teamError);
+    }
+    
+    const userTeamIds = (teamMemberships || []).map((tm) => tm.team_id);
+    console.log(`User ${userId} is member of teams:`, userTeamIds);
+
+    // Fetch files from database
+    // Filter: show all non-team files OR team files where user is a member
+    // Use separate queries and combine for better reliability
+    let files: any[] = [];
+    let error: any = null;
+
+    if (userTeamIds.length > 0) {
+      // Fetch non-team files (team_id is null)
+      const { data: nonTeamFiles, error: nonTeamError } = await supabaseServer
+        .from('data_items')
+        .select(`
           id,
-          full_name,
-          email,
-          avatar_url,
-          role
-        )
-      `)
-      .order('updated_at', { ascending: false })
-      .order('created_at', { ascending: false });
+          title,
+          type,
+          file_url,
+          link_url,
+          text_content,
+          storage_path,
+          created_by,
+          updated_by,
+          created_at,
+          updated_at,
+          folder_id,
+          visibility,
+          team_id,
+          allowed_users,
+          profiles:created_by (
+            id,
+            full_name,
+            email,
+            avatar_url,
+            role
+          )
+        `)
+        .is('team_id', null)
+        .order('updated_at', { ascending: false })
+        .order('created_at', { ascending: false });
+
+      // Fetch team files where user is a member
+      const { data: teamFiles, error: teamError } = await supabaseServer
+        .from('data_items')
+        .select(`
+          id,
+          title,
+          type,
+          file_url,
+          link_url,
+          text_content,
+          storage_path,
+          created_by,
+          updated_by,
+          created_at,
+          updated_at,
+          folder_id,
+          visibility,
+          team_id,
+          allowed_users,
+          profiles:created_by (
+            id,
+            full_name,
+            email,
+            avatar_url,
+            role
+          )
+        `)
+        .in('team_id', userTeamIds)
+        .order('updated_at', { ascending: false })
+        .order('created_at', { ascending: false });
+
+      // Log errors but continue with available data
+      if (nonTeamError) {
+        console.error('Error fetching non-team files:', nonTeamError);
+      }
+      if (teamError) {
+        console.error('Error fetching team files:', teamError);
+      }
+
+      // Set error only if both queries failed
+      if (nonTeamError && teamError) {
+        error = teamError; // Use the last error
+      }
+
+      // Combine both results (use empty array if query failed)
+      files = [...(nonTeamFiles || []), ...(teamFiles || [])];
+      
+      // Remove duplicates (in case of any overlap)
+      const uniqueFiles = Array.from(
+        new Map(files.map((file) => [file.id, file])).values()
+      );
+      files = uniqueFiles;
+      
+      // Sort by updated_at descending
+      files.sort((a, b) => {
+        const aTime = new Date(a.updated_at || a.created_at).getTime();
+        const bTime = new Date(b.updated_at || b.created_at).getTime();
+        return bTime - aTime;
+      });
+      
+      console.log(`Combined ${nonTeamFiles?.length || 0} non-team files + ${teamFiles?.length || 0} team files = ${files.length} total files`);
+    } else {
+      // If user is not in any teams, only show non-team files
+      const { data: nonTeamFiles, error: nonTeamError } = await supabaseServer
+        .from('data_items')
+        .select(`
+          id,
+          title,
+          type,
+          file_url,
+          link_url,
+          text_content,
+          storage_path,
+          created_by,
+          updated_by,
+          created_at,
+          updated_at,
+          folder_id,
+          visibility,
+          team_id,
+          allowed_users,
+          profiles:created_by (
+            id,
+            full_name,
+            email,
+            avatar_url,
+            role
+          )
+        `)
+        .is('team_id', null)
+        .order('updated_at', { ascending: false })
+        .order('created_at', { ascending: false });
+      
+      files = nonTeamFiles || [];
+      error = nonTeamError;
+    }
+
+    if (error) {
+      console.error('Error fetching files:', error);
+      console.error('Query details:', { userTeamIds, userId });
+    } else {
+      console.log(`Fetched ${files?.length || 0} files for user ${userId}`);
+      // Log team documents found
+      const teamDocs = files?.filter(f => f.team_id) || [];
+      if (teamDocs.length > 0) {
+        console.log(`Found ${teamDocs.length} team documents:`, teamDocs.map(d => ({ id: d.id, title: d.title, team_id: d.team_id })));
+      }
+    }
 
     if (error) {
       console.error('Error fetching files:', error);

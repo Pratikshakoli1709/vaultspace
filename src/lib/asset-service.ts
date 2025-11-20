@@ -14,6 +14,7 @@ export type UploadAssetParams = {
   file?: File | null;
   currentUser: User;
   sharedWithUserIds?: string[];
+  teamId?: string | null;
 };
 
 export type UploadAssetResult =
@@ -30,7 +31,16 @@ const sanitizeFileName = (name: string): string => {
 };
 
 export async function uploadAssetClient(params: UploadAssetParams): Promise<UploadAssetResult> {
-  const { title, type, linkUrl, textContent, file, currentUser, sharedWithUserIds = [] } = params;
+  const { title, type, linkUrl, textContent, file, currentUser, sharedWithUserIds = [], teamId } = params;
+
+  // Verify team membership if teamId is provided
+  if (teamId) {
+    const { isTeamMember } = await import('./team-service');
+    const isMember = await isTeamMember(currentUser.id, teamId);
+    if (!isMember) {
+      return { success: false, error: 'You are not a member of this team.' };
+    }
+  }
 
   const trimmedTitle = title.trim();
   if (!trimmedTitle) {
@@ -89,33 +99,157 @@ export async function uploadAssetClient(params: UploadAssetParams): Promise<Uplo
     publicUrl = publicData?.publicUrl ?? null;
   }
 
-  const { data: insertedIdData, error: insertError } = await supabase.rpc<{ id: string }>(
-    'create_data_item',
-    {
-      p_title: trimmedTitle,
-      p_type: type,
-      p_link_url: type === 'link' ? (linkUrl ?? '').trim() : null,
-      p_text_content: type === 'key' ? (textContent ?? '').trim() : null,
-      p_file_url: publicUrl,
-      p_storage_path: storagePath,
-    },
-  );
+  // Use direct insert if teamId is provided, otherwise use RPC
+  let insertedId: string | undefined;
+  
+  if (teamId) {
+    // For team documents, use RPC function first, then update with team fields
+    // This avoids issues if team_id/visibility columns don't exist yet
+    console.log('Creating team asset using RPC + update method');
+    
+    const { data: insertedIdData, error: rpcError } = await supabase.rpc<{ id: string }>(
+      'create_data_item',
+      {
+        p_title: trimmedTitle,
+        p_type: type,
+        p_link_url: type === 'link' ? (linkUrl ?? '').trim() : null,
+        p_text_content: type === 'key' ? (textContent ?? '').trim() : null,
+        p_file_url: publicUrl,
+        p_storage_path: storagePath,
+      },
+    );
 
-  const insertedId =
-    typeof insertedIdData === 'string'
-      ? insertedIdData
-      : Array.isArray(insertedIdData)
-        ? insertedIdData[0]?.id
-        : insertedIdData?.id;
+    const rpcInsertedId =
+      typeof insertedIdData === 'string'
+        ? insertedIdData
+        : Array.isArray(insertedIdData)
+          ? insertedIdData[0]?.id
+          : insertedIdData?.id;
 
-  if (insertError || !insertedId) {
-    console.error('Failed to insert asset', insertError);
-
-    if (storagePath) {
-      await supabase.storage.from(ASSET_BUCKET).remove([storagePath]);
+    if (rpcError || !rpcInsertedId) {
+      console.error('Failed to create asset via RPC:', rpcError);
+      if (storagePath) {
+        await supabase.storage.from(ASSET_BUCKET).remove([storagePath]);
+      }
+      return { success: false, error: rpcError?.message || 'Unable to create asset.' };
     }
 
-    return { success: false, error: insertError?.message ?? 'Unable to save asset.' };
+    // Update with team_id and visibility (these updates will fail silently if columns don't exist)
+    const updatePayload: Record<string, any> = {
+      team_id: teamId,
+      visibility: 'team',
+    };
+
+    console.log(`Updating asset ${rpcInsertedId} with team_id: ${teamId}`);
+
+    // Try to update with team_id and visibility
+    // Use a more robust approach: try update, if it fails check if columns exist
+    let updateAttempted = false;
+    let updateSucceeded = false;
+    
+    try {
+      const { error: updateError, data: updateData } = await supabase
+        .from('data_items')
+        .update(updatePayload)
+        .eq('id', rpcInsertedId)
+        .select('team_id, visibility')
+        .single();
+
+      updateAttempted = true;
+
+      if (updateError) {
+        // Check if error is due to missing columns
+        const isColumnError = updateError.message?.includes('column') || 
+                             updateError.code === '42703' ||
+                             updateError.message?.includes('does not exist');
+        
+        if (isColumnError) {
+          console.error('CRITICAL: team_id or visibility columns do not exist in database!');
+          console.error('Please run setup-teams-table.sql migration in Supabase SQL editor.');
+          console.error('Error details:', {
+            message: updateError.message,
+            code: updateError.code,
+            assetId: rpcInsertedId,
+            teamId: teamId,
+          });
+          // Asset was created but won't be visible in team view without team_id
+          return { 
+            success: false, 
+            error: 'File uploaded but team association failed. Please ensure team_id column exists in database.' 
+          };
+        } else {
+          // Other error (permissions, etc.)
+          console.error('Failed to set team_id/visibility:', {
+            message: updateError.message,
+            code: updateError.code,
+            details: updateError.details,
+            hint: updateError.hint,
+            assetId: rpcInsertedId,
+            teamId: teamId,
+          });
+          return { 
+            success: false, 
+            error: updateError.message || 'Failed to associate file with team.' 
+          };
+        }
+      } else {
+        updateSucceeded = true;
+        console.log('Successfully set team_id and visibility for asset:', updateData);
+        // Verify the update worked
+        if (updateData?.team_id !== teamId) {
+          console.error('WARNING: team_id update may have failed. Expected:', teamId, 'Got:', updateData?.team_id);
+        }
+      }
+    } catch (updateException: any) {
+      console.error('Exception during team_id update:', updateException);
+      return { 
+        success: false, 
+        error: 'Failed to associate file with team: ' + (updateException.message || 'Unknown error')
+      };
+    }
+    
+    if (!updateSucceeded) {
+      // If update failed, we should not proceed
+      if (storagePath) {
+        await supabase.storage.from(ASSET_BUCKET).remove([storagePath]);
+      }
+      return { 
+        success: false, 
+        error: 'Failed to associate file with team. File upload was cancelled.' 
+      };
+    }
+
+    insertedId = rpcInsertedId;
+  } else {
+    // Use RPC for regular assets
+    const { data: insertedIdData, error: insertError } = await supabase.rpc<{ id: string }>(
+      'create_data_item',
+      {
+        p_title: trimmedTitle,
+        p_type: type,
+        p_link_url: type === 'link' ? (linkUrl ?? '').trim() : null,
+        p_text_content: type === 'key' ? (textContent ?? '').trim() : null,
+        p_file_url: publicUrl,
+        p_storage_path: storagePath,
+      },
+    );
+
+    insertedId =
+      typeof insertedIdData === 'string'
+        ? insertedIdData
+        : Array.isArray(insertedIdData)
+          ? insertedIdData[0]?.id
+          : insertedIdData?.id;
+
+    if (insertError || !insertedId) {
+      console.error('Failed to insert asset', insertError);
+
+      if (storagePath) {
+        await supabase.storage.from(ASSET_BUCKET).remove([storagePath]);
+      }
+
+      return { success: false, error: insertError?.message ?? 'Unable to save asset.' };
+    }
   }
 
   const { data, error } = await supabase
@@ -133,6 +267,10 @@ export async function uploadAssetClient(params: UploadAssetParams): Promise<Uplo
         updated_by,
         created_at,
         updated_at,
+        folder_id,
+        visibility,
+        team_id,
+        allowed_users,
         profiles:created_by (
           id,
           full_name,
@@ -148,6 +286,23 @@ export async function uploadAssetClient(params: UploadAssetParams): Promise<Uplo
     )
     .eq('id', insertedId)
     .maybeSingle<DataItemRow>();
+  
+  // Log the fetched asset to verify team_id is set (for team uploads)
+  if (data && teamId) {
+    console.log('✅ Fetched asset after upload:', {
+      id: data.id,
+      title: data.title,
+      team_id: data.team_id,
+      expected_team_id: teamId,
+      match: data.team_id === teamId,
+      created_by: data.created_by
+    });
+    if (data.team_id !== teamId) {
+      console.error('❌ WARNING: Asset team_id mismatch! Expected:', teamId, 'Got:', data.team_id);
+    } else {
+      console.log('✅ Asset team_id correctly set - all team members should be able to see this document');
+    }
+  }
 
   if (error || !data) {
     console.error('Failed to load inserted asset', error);

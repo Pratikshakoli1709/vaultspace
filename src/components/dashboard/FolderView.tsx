@@ -26,6 +26,9 @@ interface FolderViewProps {
   onFileDeleted?: (fileId: string) => void;
   onFolderCreated?: () => void;
   externalDndContext?: boolean; // If true, don't create own DndContext
+  hideNewFolder?: boolean; // If true, hide the "New Folder" button
+  teamScopedRecentFiles?: FileWithVersions[]; // Override recentFiles for team view
+  teamScopedStarredItems?: (Folder | FileWithVersions)[]; // Override starredItems for team view
 }
 
 interface DroppableFolderProps {
@@ -63,6 +66,9 @@ export function FolderView({
   onFileDeleted,
   onFolderCreated,
   externalDndContext = false,
+  hideNewFolder = false,
+  teamScopedRecentFiles,
+  teamScopedStarredItems,
 }: FolderViewProps) {
   // Always use list view - no grid/card format
   const [viewMode] = useState<'list'>('list');
@@ -167,8 +173,8 @@ export function FolderView({
   const {
     selectedFolderId,
     folders,
-    recentFiles,
-    starredItems,
+    recentFiles: globalRecentFiles,
+    starredItems: globalStarredItems,
     setSelectedFolder,
     moveFile,
     moveFolder,
@@ -177,6 +183,10 @@ export function FolderView({
     unstarItem,
     getFolderById,
   } = useFolderStore();
+
+  // Use team-scoped recent/starred if provided, otherwise use global
+  const recentFiles = teamScopedRecentFiles || globalRecentFiles;
+  const starredItems = teamScopedStarredItems || globalStarredItems;
   
   // Listen for starred items updates to refresh localFiles
   useEffect(() => {
@@ -500,15 +510,17 @@ export function FolderView({
             />
           </div>
           
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsCreateDialogOpen(true)}
-            className="text-xs sm:text-sm"
-          >
-            <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5" />
-            <span className="hidden sm:inline">New Folder</span>
-          </Button>
+          {!hideNewFolder && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsCreateDialogOpen(true)}
+              className="text-xs sm:text-sm"
+            >
+              <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5" />
+              <span className="hidden sm:inline">New Folder</span>
+            </Button>
+          )}
           
           {/* View mode toggle removed - always showing list view */}
         </div>
