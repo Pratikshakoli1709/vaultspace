@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { MoreVertical, Edit, Trash2, Eye } from 'lucide-react';
+import { MoreVertical, Edit, Trash2, Eye, Copy } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +18,7 @@ interface FileActionsProps {
   onEdit?: () => void;
   onDelete?: () => void;
   onOpen?: () => void;
+  onCopy?: () => void;
 }
 
 export function FileActions({
@@ -26,6 +27,7 @@ export function FileActions({
   onEdit,
   onDelete,
   onOpen,
+  onCopy,
 }: FileActionsProps) {
   const [open, setOpen] = useState(false);
   
@@ -71,6 +73,25 @@ export function FileActions({
         </DropdownMenuItem>
         
         <DropdownMenuSeparator />
+        
+        {/* Copy - only for keys */}
+        {file.type === 'key' && (
+          <>
+            <DropdownMenuItem 
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                if (onCopy) {
+                  handleAction(onCopy, e);
+                }
+              }}
+            >
+              <Copy className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              Copy
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
         
         {/* Edit - always visible */}
         <DropdownMenuItem 

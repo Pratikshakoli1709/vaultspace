@@ -4,6 +4,8 @@ import { useDraggable } from '@dnd-kit/core';
 import { useState } from 'react';
 import * as React from 'react';
 import { Star, MoreVertical, FileText, Link, KeyRound, Image, Clock } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { format } from 'date-fns';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -114,6 +116,47 @@ export function FileCard({
   
   const handleOpen = () => {
     setIsPreviewOpen(true);
+  };
+  
+  const handleCopy = async () => {
+    if (file.type !== 'key' || !file.text_content) {
+      return;
+    }
+    
+    try {
+      // Copy to clipboard
+      await navigator.clipboard.writeText(file.text_content);
+      
+      toast({
+        title: "Key Copied",
+        description: `The key for "${file.title}" has been copied to your clipboard.`,
+      });
+      
+      // Log activity (non-blocking - don't fail copy if logging fails)
+      const { logActivityClient } = await import('@/lib/asset-service');
+      void logActivityClient({
+        userId: currentUser.id,
+        action: 'COPIED',
+        itemId: file.id,
+        itemTitle: file.title
+      }).catch((err) => {
+        console.warn('Activity logging failed (non-critical):', err);
+      });
+      
+      // Notify admins when a key is copied
+      const { notifyAllAdmins } = await import('@/lib/notifications');
+      await notifyAllAdmins(
+        `API Key "${file.title}" was copied by ${currentUser.name || currentUser.email}`,
+        currentUser.id,
+      );
+    } catch (error) {
+      console.error('Error copying key:', error);
+      toast({
+        title: "Error",
+        description: "Failed to copy key to clipboard",
+        variant: "destructive",
+      });
+    }
   };
   
   const handleStarAction = async () => {
@@ -337,9 +380,35 @@ export function FileCard({
                   {file.category}
                 </Badge>
               )}
+              {file.uploader && (
+                <>
+                  <span className="hidden sm:inline">•</span>
+                  <div className="flex items-center gap-1.5">
+                    <Avatar className="h-3 w-3 sm:h-4 sm:w-4">
+                      <AvatarImage src={file.uploader.avatarUrl} />
+                      <AvatarFallback className="text-[8px] sm:text-[10px]">{file.uploader.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <span className="truncate">Created by {file.uploader.name}</span>
+                  </div>
+                </>
+              )}
+              {file.created_at && (
+                <>
+                  <span className="hidden sm:inline">•</span>
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    <span className="hidden md:inline">
+                      {format(new Date(file.created_at), 'MMM d, yyyy')} at {format(new Date(file.created_at), 'h:mm a')}
+                    </span>
+                    <span className="md:hidden">
+                      {formatDistanceToNow(new Date(file.created_at), { addSuffix: true })}
+                    </span>
+                  </div>
+                </>
+              )}
               {file.lastAccessed && (
                 <>
-                  <Clock className="h-3 w-3" />
+                  <span className="hidden sm:inline">•</span>
                   <span>Opened {formatDistanceToNow(new Date(file.lastAccessed), { addSuffix: true })}</span>
                 </>
               )}
@@ -386,6 +455,7 @@ export function FileCard({
               onEdit={handleEdit}
               onDelete={handleDeleteClick}
               onOpen={handleOpen}
+              onCopy={handleCopy}
             />
           </div>
         </div>
