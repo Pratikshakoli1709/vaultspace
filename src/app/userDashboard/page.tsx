@@ -285,17 +285,32 @@ function UserDashboardPageContent() {
     }
   }, [supabaseUser?.id, fetchAssets, fetchActivity]);
 
-  // Listen for asset refresh events (e.g., when team documents are uploaded)
+  // Listen for asset refresh events (e.g., when team documents are uploaded or files are moved)
   useEffect(() => {
     const handleAssetRefresh = () => {
       if (supabaseUser?.id) {
-        console.log('Refreshing assets due to asset refresh event');
+        console.log('🔄 Refreshing assets due to asset refresh event');
         void fetchAssets(supabaseUser.id);
+      }
+    };
+    
+    const handleFileMoved = (event: CustomEvent) => {
+      if (supabaseUser?.id) {
+        console.log('📁 File moved event received:', event.detail);
+        // Refresh assets after a short delay to ensure database update is complete
+        setTimeout(() => {
+          console.log('🔄 Refreshing assets after file move');
+          void fetchAssets(supabaseUser.id);
+        }, 500);
       }
     };
 
     window.addEventListener('assets-refresh', handleAssetRefresh);
-    return () => window.removeEventListener('assets-refresh', handleAssetRefresh);
+    window.addEventListener('file-moved', handleFileMoved as EventListener);
+    return () => {
+      window.removeEventListener('assets-refresh', handleAssetRefresh);
+      window.removeEventListener('file-moved', handleFileMoved as EventListener);
+    };
   }, [supabaseUser?.id, fetchAssets]);
 
   useEffect(() => {

@@ -225,7 +225,7 @@ export function FolderView({
       starredItems.filter((item) => 'title' in item).map((item) => item.id)
     );
     
-    return localFiles.map((file) => {
+    const mapped = localFiles.map((file) => {
       // Determine isStarred status - prioritize explicit value, then check starredItems store
       const isStarredFromStore = starredFileIds.has(file.id);
       
@@ -250,7 +250,33 @@ export function FolderView({
         currentVersion: file.currentVersion || 1,
       };
     });
-  }, [localFiles, starredItems]);
+    
+    // Debug: Log files with their folderIds to see what we're working with
+    if (currentFolder) {
+      console.log('📋 All files loaded:', {
+        totalFiles: mapped.length,
+        filesByType: {
+          image: mapped.filter(f => f.type === 'image').length,
+          document: mapped.filter(f => f.type === 'document').length,
+          key: mapped.filter(f => f.type === 'key').length,
+          link: mapped.filter(f => f.type === 'link').length,
+        },
+        filesWithFolderId: mapped.filter(f => f.folderId).map(f => ({
+          id: f.id,
+          title: f.title,
+          type: f.type,
+          folderId: f.folderId
+        })),
+        filesInCurrentFolder: mapped.filter(f => f.folderId === currentFolder.id).map(f => ({
+          id: f.id,
+          title: f.title,
+          type: f.type
+        }))
+      });
+    }
+    
+    return mapped;
+  }, [localFiles, starredItems, currentFolder]);
   
   // Filter by selected folder or special views
   const filteredFiles = useMemo(() => {
@@ -273,7 +299,40 @@ export function FolderView({
       fileList = recentFiles;
     } else if (currentFolder) {
       // Show files that belong to this folder
-      fileList = filesWithVersions.filter((file) => file.folderId === currentFolder.id);
+      // Debug: Log all files and their folderIds to see what's happening
+      console.log('🔍 Filtering files for folder:', {
+        folderId: currentFolder.id,
+        folderName: currentFolder.name,
+        totalFiles: filesWithVersions.length,
+        filesWithFolderId: filesWithVersions.filter(f => f.folderId).map(f => ({
+          id: f.id,
+          title: f.title,
+          type: f.type,
+          folderId: f.folderId,
+          matches: f.folderId === currentFolder.id
+        }))
+      });
+      
+      fileList = filesWithVersions.filter((file) => {
+        const matches = file.folderId === currentFolder.id;
+        if (!matches && file.folderId) {
+          console.log('⚠️ File not matching folder:', {
+            fileId: file.id,
+            fileTitle: file.title,
+            fileType: file.type,
+            fileFolderId: file.folderId,
+            currentFolderId: currentFolder.id,
+            typeMatch: typeof file.folderId === typeof currentFolder.id,
+            strictEqual: file.folderId === currentFolder.id,
+            looseEqual: file.folderId == currentFolder.id
+          });
+        }
+        return matches;
+      });
+      
+      console.log(`✅ Found ${fileList.length} files in folder "${currentFolder.name}"`, 
+        fileList.map(f => ({ id: f.id, title: f.title, type: f.type }))
+      );
     } else {
       // Root level - only show files without folders (folderId is null or undefined)
       fileList = filesWithVersions.filter((file) => !file.folderId);
@@ -392,7 +451,21 @@ export function FolderView({
             ...file,
             folderId: normalizedId,
           };
+          
+          // Update local files immediately for instant UI feedback
+          setLocalFiles((prevFiles) =>
+            prevFiles.map((f) => (f.id === fileId ? { ...f, folderId: normalizedId } : f))
+          );
+          
           onFileUpdated?.(updatedFile);
+          
+          console.log('✅ File moved in UI:', {
+            fileId,
+            oldFolderId: file.folderId,
+            newFolderId: normalizedId
+          });
+        } else {
+          console.warn('⚠️ File not found in local state after move:', fileId);
         }
       } else {
         // Check if error is due to file not found (deleted)

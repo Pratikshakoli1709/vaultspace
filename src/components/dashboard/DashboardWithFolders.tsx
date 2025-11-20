@@ -269,22 +269,27 @@ export function DashboardWithFolders({
           };
           onAssetUpdated?.(updatedFile);
           
-          // Also update assets array immediately for instant UI update
-          // This ensures FolderView sees the updated file immediately
-          const updatedAssets = assets.map((f) => 
-            f.id === fileId ? updatedFile : f
-          );
-          // Trigger a re-render by updating a state that FolderView depends on
-          // The assets prop will be updated by the parent, but we can also
-          // trigger a refresh by dispatching a custom event
+          console.log('✅ File moved successfully:', {
+            fileId,
+            oldFolderId: file.folderId,
+            newFolderId: normalizedId,
+            fileTitle: file.title
+          });
+          
+          // Dispatch event to trigger refresh in parent component
           window.dispatchEvent(new CustomEvent('file-moved', { 
             detail: { fileId, folderId: normalizedId } 
           }));
+          
+          // Also trigger a full assets refresh to ensure folder_id is loaded from database
+          window.dispatchEvent(new CustomEvent('assets-refresh'));
+        } else {
+          console.warn('⚠️ File not found in assets after move:', fileId);
         }
         
         toast({
           title: 'Success',
-          description: `File moved to ${targetFolderId ? 'folder' : 'root'}`,
+          description: `File moved to ${targetFolderId ? 'folder' : 'root'}. Refreshing...`,
         });
       } else {
         // Check if error is due to file not found (deleted)

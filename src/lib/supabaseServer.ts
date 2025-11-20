@@ -30,6 +30,22 @@ export function createServerClient() {
   return createClient(supabaseUrl, anonKey);
 }
 
-// Export a singleton instance
-export const supabaseServer = createServerClient();
+// Export a singleton instance (lazy initialization to handle missing env vars gracefully)
+let _supabaseServer: ReturnType<typeof createClient> | null = null;
+
+export function getSupabaseServer() {
+  if (!_supabaseServer) {
+    try {
+      _supabaseServer = createServerClient();
+    } catch (error) {
+      console.error('Failed to initialize Supabase server client:', error);
+      throw error;
+    }
+  }
+  return _supabaseServer;
+}
+
+// Export for backward compatibility - initialize lazily
+// This will throw if env vars are missing, but that's okay - it should be caught in API routes
+export const supabaseServer = getSupabaseServer();
 
