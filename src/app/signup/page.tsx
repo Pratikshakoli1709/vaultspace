@@ -167,30 +167,30 @@ export default function SignupPage() {
     }
 
   return (
-    <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
-      <div className="flex items-center justify-center py-12">
-        <div className="mx-auto grid w-[350px] gap-6">
+    <div className="w-full min-h-screen lg:grid lg:grid-cols-2">
+      <div className="flex items-center justify-center py-8 sm:py-12 px-4 sm:px-6">
+        <div className="mx-auto grid w-full max-w-full sm:max-w-[350px] gap-4 sm:gap-6 px-2 sm:px-0">
           <div className="grid gap-2 text-center">
-             <div className="flex items-center justify-center gap-2 mb-4">
+             <div className="flex items-center justify-center gap-2 mb-3 sm:mb-4">
                 <Logo />
-                <h1 className="text-3xl font-bold">VaultSpace</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold">VaultSpace</h1>
             </div>
-            <h2 className="text-2xl font-bold">Create an account</h2>
-            <p className="text-balance text-muted-foreground">
+            <h2 className="text-xl sm:text-2xl font-bold">Create an account</h2>
+            <p className="text-sm sm:text-base text-balance text-muted-foreground">
               Enter your information to get started.
             </p>
           </div>
-          <form onSubmit={handleSignUp} className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Full name</Label>
-              <Input id="name" placeholder="John Doe" required value={name} onChange={(e) => setName(e.target.value)} disabled={isLoading} />
+          <form onSubmit={handleSignUp} className="grid gap-3 sm:gap-4">
+            <div className="grid gap-1.5 sm:gap-2">
+              <Label htmlFor="name" className="text-sm sm:text-base">Full name</Label>
+              <Input id="name" placeholder="John Doe" required value={name} onChange={(e) => setName(e.target.value)} disabled={isLoading} className="text-sm sm:text-base h-9 sm:h-10" />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} />
+            <div className="grid gap-1.5 sm:gap-2">
+              <Label htmlFor="email" className="text-sm sm:text-base">Email</Label>
+              <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} className="text-sm sm:text-base h-9 sm:h-10" />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
+            <div className="grid gap-1.5 sm:gap-2">
+              <Label htmlFor="password" className="text-sm sm:text-base">Password</Label>
               <Input 
                 id="password" 
                 type="password" 
@@ -199,13 +199,14 @@ export default function SignupPage() {
                 onChange={(e) => setPassword(e.target.value)} 
                 disabled={isLoading}
                 placeholder="At least 6 characters"
+                className="text-sm sm:text-base h-9 sm:h-10"
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full h-9 sm:h-10 text-sm sm:text-base" disabled={isLoading}>
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Create an account"}
             </Button>
           </form>
-          <div className="mt-4 text-center text-sm">
+          <div className="mt-4 text-center text-xs sm:text-sm">
             Already have an account?{" "}
             <Link href="/login" className="underline">
               Login

@@ -91,3 +91,30 @@ export async function notifyAllAdmins(message: string, senderId: string) {
   }
 }
 
+/**
+ * Notify a specific user
+ * Similar to broadcast but for individual users
+ */
+export async function notifyUser(userId: string, message: string, senderId: string): Promise<void> {
+  try {
+    const { error } = await supabase.from('notifications').insert({
+      sender_id: senderId,
+      receiver_id: userId,
+      message,
+      type: 'personal',
+      is_read: false,
+    });
+
+    if (error) {
+      console.error('Failed to notify user', error);
+      throw error;
+    }
+    
+    console.log(`Notification sent to user ${userId}: ${message}`);
+  } catch (error) {
+    console.error('Error notifying user:', error);
+    // Re-throw to allow caller to handle
+    throw error;
+  }
+}
+

@@ -92,17 +92,18 @@ export function AddUser({ currentUser, onUserCreated }: AddUserProps) {
   };
 
   return (
+    <div className="dashboard-center w-full">
     <Card>
       <CardHeader>
-        <CardTitle>Add New User</CardTitle>
-        <CardDescription>
+        <CardTitle className="text-lg sm:text-xl">Add New User</CardTitle>
+        <CardDescription className="text-sm">
           Create a new user account. The user will be able to log in with the email and password you provide.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleCreateUser} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+        <form onSubmit={handleCreateUser} className="space-y-3 sm:space-y-4">
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="email" className="text-sm sm:text-base">Email</Label>
             <Input
               id="email"
               type="email"
@@ -111,10 +112,11 @@ export function AddUser({ currentUser, onUserCreated }: AddUserProps) {
               onChange={(e) => setEmail(e.target.value)}
               disabled={isLoading}
               required
+              className="text-sm sm:text-base h-9 sm:h-10"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="password" className="text-sm sm:text-base">Password</Label>
             <Input
               id="password"
               type="password"
@@ -124,12 +126,13 @@ export function AddUser({ currentUser, onUserCreated }: AddUserProps) {
               disabled={isLoading}
               required
               minLength={6}
+              className="text-sm sm:text-base h-9 sm:h-10"
             />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Password must be at least 6 characters long.
             </p>
           </div>
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button type="submit" className="w-full text-sm sm:text-base h-9 sm:h-10" disabled={isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -145,6 +148,7 @@ export function AddUser({ currentUser, onUserCreated }: AddUserProps) {
         </form>
       </CardContent>
     </Card>
+    </div>
   );
 }
 

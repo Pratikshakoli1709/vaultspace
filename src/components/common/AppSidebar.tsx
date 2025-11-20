@@ -12,7 +12,7 @@ import {
     SidebarMenuButton,
 } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
-import { Home, Settings, Shield, LogOut } from "lucide-react"
+import { Home, Settings, Shield, LogOut, Sparkles } from "lucide-react"
 import { User } from "@/lib/types"
 import { Logo } from "./Logo"
 import { useRouter } from "next/navigation"
@@ -37,10 +37,10 @@ export function AppSidebar({ user }: { user: User }) {
 
     return (
         <Sidebar>
-            <SidebarHeader className="h-16 flex items-center gap-2 px-4">
+            <SidebarHeader className="h-14 sm:h-16 flex items-center gap-2 px-3 sm:px-4">
                 <Logo />
-                <div className="flex flex-col">
-                    <h2 className="text-lg font-semibold text-sidebar-foreground tracking-tighter">
+                <div className="flex flex-col min-w-0">
+                    <h2 className="text-sm sm:text-base md:text-lg font-semibold text-sidebar-foreground tracking-tighter truncate">
                         VaultSpace
                     </h2>
                 </div>
@@ -70,6 +70,14 @@ export function AppSidebar({ user }: { user: User }) {
                             <SidebarMenuButton tooltip="Settings" isActive={pathname === '/settings'}>
                                 <Settings />
                                 <span>Settings</span>
+                            </SidebarMenuButton>
+                        </Link>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <Link href="/ai-assistant">
+                            <SidebarMenuButton tooltip="AI Assistant" isActive={pathname === '/ai-assistant'}>
+                                <Sparkles />
+                                <span>AI Assistant</span>
                             </SidebarMenuButton>
                         </Link>
                     </SidebarMenuItem>

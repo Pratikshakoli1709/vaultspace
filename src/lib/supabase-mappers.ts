@@ -27,6 +27,17 @@ export type DataItemRow = {
   updated_by: string | null;
   created_at: string;
   updated_at: string | null;
+  visibility?: 'public' | 'team' | 'private' | null;
+  team_id?: string | null;
+  allowed_users?: string[] | null;
+  folder_id?: string | null;
+  is_starred?: boolean | null;
+  extracted_text?: string | null;
+  raw_text?: string | null;
+  embedding?: string | number[] | null; // Can be string (JSON) or array
+  category?: string | null;
+  tags?: string[] | null;
+  ai_summary?: string | null;
   profiles?: ProfileRow | null;
   asset_shares?: { user_id: string }[] | null;
 };
@@ -66,6 +77,25 @@ export const mapRowToAsset = (row: DataItemRow): EnrichedDataItem => {
   const shareRecipientIds =
     row.asset_shares?.map((entry) => entry.user_id).filter((value): value is string => Boolean(value)) ?? [];
 
+  // Parse embedding if it's a string
+  let embedding: number[] | null = null;
+  if (row.embedding) {
+    if (typeof row.embedding === 'string') {
+      try {
+        embedding = JSON.parse(row.embedding);
+      } catch {
+        // If parsing fails, try to parse as PostgreSQL array format
+        try {
+          embedding = row.embedding.replace(/[{}]/g, '').split(',').map(Number);
+        } catch {
+          embedding = null;
+        }
+      }
+    } else if (Array.isArray(row.embedding)) {
+      embedding = row.embedding;
+    }
+  }
+
   return {
     id: row.id,
     title: row.title,
@@ -78,6 +108,18 @@ export const mapRowToAsset = (row: DataItemRow): EnrichedDataItem => {
     updated_by: row.updated_by ?? undefined,
     created_at: row.created_at,
     updated_at: row.updated_at ?? row.created_at,
+    visibility: (row.visibility as 'public' | 'team' | 'private') || 'public',
+    teamId: row.team_id ?? undefined,
+    allowedUsers: row.allowed_users ?? undefined,
+    folderId: row.folder_id ?? undefined,
+    is_starred: row.is_starred ?? false,
+    isStarred: row.is_starred ?? false,
+    extracted_text: row.extracted_text ?? undefined,
+    raw_text: row.raw_text ?? undefined,
+    embedding: embedding ?? undefined,
+    category: row.category ?? undefined,
+    tags: row.tags ?? undefined,
+    ai_summary: row.ai_summary ?? undefined,
     uploader,
     sharedWith: shareRecipientIds,
   };

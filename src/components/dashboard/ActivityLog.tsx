@@ -27,45 +27,49 @@ const actionColors: Record<string, string> = {
 
 export function ActivityLogList({ activityLogs }: ActivityLogListProps) {
   return (
+    <div className="dashboard-center w-full">
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Activity Log</CardTitle>
-        <CardDescription>An audit trail of all actions taken within VaultSpace.</CardDescription>
+        <CardTitle className="text-lg sm:text-xl">Activity Log</CardTitle>
+        <CardDescription className="text-sm">An audit trail of all actions taken within VaultSpace.</CardDescription>
       </CardHeader>
-      <CardContent className="w-full overflow-x-auto">
+      <CardContent className="w-full overflow-x-auto p-0 sm:p-6">
+        <div className="w-full min-w-0">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>User</TableHead>
-              <TableHead>Action</TableHead>
-              <TableHead className="hidden md:table-cell">Asset</TableHead>
-              <TableHead className="text-right">Timestamp</TableHead>
+                <TableHead className="text-xs sm:text-sm">User</TableHead>
+                <TableHead className="text-xs sm:text-sm">Action</TableHead>
+                <TableHead className="hidden md:table-cell text-xs sm:text-sm">Asset</TableHead>
+                <TableHead className="text-right text-xs sm:text-sm">Timestamp</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {activityLogs.map((log) => (
               <TableRow key={log.id}>
-                <TableCell>
+                  <TableCell className="min-w-0 sm:min-w-[120px]">
                   <div className="flex items-center gap-2">
-                    <Avatar className="h-8 w-8">
+                      <Avatar className="h-6 w-6 sm:h-8 sm:w-8 flex-shrink-0">
                       <AvatarImage src={log.user?.avatarUrl} />
-                      <AvatarFallback>{log.user?.name.charAt(0)}</AvatarFallback>
+                        <AvatarFallback className="text-xs">{log.user?.name.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <div className="flex flex-col">
-                        <span className="font-medium">{log.user?.name}</span>
-                        <span className="text-sm text-muted-foreground">{log.user?.email}</span>
+                      <div className="flex flex-col min-w-0 flex-1">
+                          <span className="font-medium text-sm sm:text-base truncate">{log.user?.name}</span>
+                          <span className="text-xs sm:text-sm text-muted-foreground truncate">{log.user?.email}</span>
                     </div>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant="secondary" className={actionColors[log.action] || ''}>
+                    <Badge variant="secondary" className={`text-xs ${actionColors[log.action] || ''}`}>
                     {log.action}
                   </Badge>
                 </TableCell>
-                <TableCell className="hidden md:table-cell">{log.item_title || "N/A"}</TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    <span className="text-sm truncate block max-w-full sm:max-w-[200px]">{log.item_title || "N/A"}</span>
+                  </TableCell>
                 <TableCell className="text-right">
                   <div className="flex flex-col items-end">
-                    <span className="text-sm font-medium">
+                      <span className="text-xs sm:text-sm font-medium">
                       {format(new Date(log.timestamp), 'MMM d, yyyy')}
                     </span>
                     <span className="text-xs text-muted-foreground">
@@ -77,7 +81,9 @@ export function ActivityLogList({ activityLogs }: ActivityLogListProps) {
             ))}
           </TableBody>
         </Table>
+        </div>
       </CardContent>
     </Card>
+    </div>
   );
 }

@@ -94,29 +94,31 @@ export function UserManagement({ currentUser, users, onUserRoleUpdated }: UserMa
   };
 
   return (
+    <div className="dashboard-center w-full">
     <Card>
       <CardHeader>
-        <CardTitle>User Management</CardTitle>
-        <CardDescription>Manage user roles and permissions for VaultSpace.</CardDescription>
+        <CardTitle className="text-lg sm:text-xl">User Management</CardTitle>
+        <CardDescription className="text-sm">Manage user roles and permissions for VaultSpace.</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-x-auto p-0 sm:p-6">
+        <div className="w-full min-w-0">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>User</TableHead>
-              <TableHead className="text-right">Admin</TableHead>
+                <TableHead className="text-xs sm:text-sm">User</TableHead>
+                <TableHead className="text-right text-xs sm:text-sm">Admin</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {users.map((user) => (
               <TableRow key={user.id}>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Avatar>
+                  <TableCell className="min-w-0 sm:min-w-[150px]">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
                       <AvatarImage src={user.avatarUrl} />
-                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                        <AvatarFallback className="text-xs sm:text-sm">{user.name.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <span className="font-medium">{user.name}</span>
+                      <span className="font-medium text-sm sm:text-base truncate flex-1 min-w-0">{user.name}</span>
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
@@ -137,15 +139,16 @@ export function UserManagement({ currentUser, users, onUserRoleUpdated }: UserMa
             ))}
           </TableBody>
         </Table>
+        </div>
       </CardContent>
-      <CardFooter className="border-t px-6 py-4">
-        <div className="flex flex-col gap-2">
-          <h3 className="font-semibold">Admin AI Tools</h3>
-          <p className="text-sm text-muted-foreground">
+      <CardFooter className="border-t px-4 sm:px-6 py-3 sm:py-4">
+        <div className="flex flex-col gap-2 w-full">
+          <h3 className="font-semibold text-sm sm:text-base">Admin AI Tools</h3>
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Use specialized tools to generate notifications for users.
           </p>
           <KeyRotationNotificationDialog>
-            <Button variant="outline">
+            <Button variant="outline" className="w-full sm:w-auto text-sm">
               <Bot className="mr-2 h-4 w-4" />
               Generate Key Rotation Notification
             </Button>
@@ -153,5 +156,6 @@ export function UserManagement({ currentUser, users, onUserRoleUpdated }: UserMa
         </div>
       </CardFooter>
     </Card>
+    </div>
   );
 }
